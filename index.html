@@ -1,0 +1,2065 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pitwall · F1 Season Dashboard</title>
+<meta name="description" content="Formula 1 season dashboard powered by the free Jolpica F1 and OpenF1 APIs.">
+<meta name="theme-color" content="#0a0a0c">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pitwall F1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%230a0a0c'/%3E%3Crect x='7' y='6' width='5' height='20' fill='%23e10600'/%3E%3Crect x='14' y='6' width='11' height='5' fill='%23f1f1f2'/%3E%3Crect x='14' y='14' width='8' height='4' fill='%23f1f1f2'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a0c;--bg2:#0e0e11;--card:#141518;--card2:#1a1b1f;--card3:#222328;
+  --line:#24252a;--line2:#303137;
+  --tx:#f1f1f2;--tx2:#a0a2a9;--tx3:#6a6c74;
+  --red:#e10600;--red-t:#ff4d45;--red-d:rgba(225,6,0,.12);--amber:#e8a33a;--gold:#e2b64a;--silver:#c5ccd6;--bronze:#cd8c5a;--purple:#b98cff;
+  --r:4px;--hdr:56px;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Noto Sans KR',monospace;
+  --sans:'Titillium Web','Noto Sans KR',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 var(--sans);-webkit-font-smoothing:antialiased;min-height:100vh}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:inherit}
+button:disabled{cursor:default}
+img{display:block;max-width:100%}
+:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.mono,.n{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.up{text-transform:uppercase}
+.muted{color:var(--tx2)}.dim{color:var(--tx3)}
+.lbl{font-size:10.5px;letter-spacing:.14em;color:var(--tx3);font-weight:700;text-transform:uppercase}
+.kicker{font-size:12px;letter-spacing:.16em;font-weight:700;color:var(--tx2);text-transform:uppercase;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.kicker.red{color:var(--red-t)}
+.mt16{margin-top:16px}
+
+/* header */
+.top{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+.top-in{max-width:1200px;margin:0 auto;height:var(--hdr);display:flex;align-items:center;gap:22px;padding:0 20px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:.12em;font-size:17px;line-height:1}
+.brand-bar{width:4px;height:26px;background:var(--red)}
+.brand small{display:block;font-size:9.5px;letter-spacing:.22em;color:var(--tx3);font-weight:700;margin-top:3px}
+.nav{display:flex;gap:2px;flex:1}
+.nav a{padding:0 12px;height:var(--hdr);display:flex;align-items:center;font-size:12.5px;font-weight:700;letter-spacing:.12em;color:var(--tx2);border-bottom:2px solid transparent;margin-bottom:-1px}
+.nav a:hover{color:var(--tx)}
+.nav a.on{color:var(--tx);border-bottom-color:var(--red)}
+.ctrls{display:flex;gap:8px;margin-left:auto}
+.sel{appearance:none;-webkit-appearance:none;background:var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23a0a2a9' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 9px center;border:1px solid var(--line2);color:var(--tx);font:700 12px/1 var(--sans);letter-spacing:.06em;padding:8px 26px 8px 10px;border-radius:var(--r);cursor:pointer;max-width:150px}
+.sel:hover{border-color:var(--tx3)}
+.sel-lang{max-width:70px}
+html[lang="ko"] body{word-break:keep-all}
+html[lang="ko"] :is(.lbl,.kicker,.nav a,.bnav a,.ch h3,.sec,.h2,.tag,.btn,.btn-sm,.tab,.sess-name,.srow-name,.back,.ch-link,.srow-link,.sess-f a,.src,.thead span,.sb-btn,.wk-dh,.race-round,.cd-u span,.rt th,small){letter-spacing:.02em}
+html[lang="ko"] :is(.h1,.hero-title,.race-name,.rb-title h3,.res-head h2,.dh-name){letter-spacing:-.01em}
+
+/* status bar */
+.sbar{background:var(--bg2);border-bottom:1px solid var(--line)}
+.sb-in{max-width:1200px;margin:0 auto;padding:6px 20px;display:flex;flex-wrap:wrap;gap:4px 18px;align-items:center;font-size:12px;min-height:32px}
+.sb-item{display:inline-flex;gap:6px;align-items:baseline}
+.sb-item b{font:500 11.5px var(--mono);color:var(--tx)}
+.sb-item b.warn{color:var(--amber)}
+.sb-item b.bad{color:var(--red-t)}
+.sb-btn{margin-left:auto;font:700 10.5px var(--sans);letter-spacing:.14em;color:var(--tx2);border:1px solid var(--line2);padding:4px 9px;border-radius:var(--r)}
+.sb-btn:hover:not(:disabled){color:var(--tx);border-color:var(--tx3)}
+.sb-btn:disabled{opacity:.5}
+.banner{max-width:1200px;margin:0 auto;padding:0 20px 8px}
+.banner-in{padding:10px 14px;border:1px solid rgba(225,6,0,.45);background:var(--red-d);border-radius:var(--r);display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:13.5px}
+.banner-in.info{border-color:var(--line2);background:var(--card)}
+.btn-sm{font:700 11px var(--sans);letter-spacing:.12em;padding:5px 10px;border-radius:var(--r);background:var(--red);color:#fff}
+
+main{max-width:1200px;margin:0 auto;padding:22px 20px 96px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r)}
+.pagehead{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin:4px 0 18px;flex-wrap:wrap}
+.h1{font-size:clamp(30px,5vw,42px);font-weight:900;margin:2px 0 0;line-height:1;text-transform:uppercase;letter-spacing:.01em}
+.h2{font-size:15px;font-weight:900;letter-spacing:.14em;margin:0;text-transform:uppercase}
+.phmeta{text-align:right;font:500 12px/1.6 var(--mono);color:var(--tx2)}
+.roundbox{text-align:right}
+.roundbox b{display:block;font-size:30px;line-height:1.1}
+.sechead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:26px 0 10px;flex-wrap:wrap}
+.sec{font-size:12px;font-weight:700;letter-spacing:.16em;color:var(--tx2);margin:0;text-transform:uppercase}
+.back{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.14em;color:var(--tx2);margin:0 0 14px}
+.back:hover{color:var(--tx)}
+.btn{display:inline-flex;align-items:center;gap:8px;font:700 12px var(--sans);letter-spacing:.14em;padding:10px 14px;border:1px solid var(--line2);border-radius:var(--r);color:var(--tx)}
+.btn:hover{border-color:var(--red);background:var(--red-d)}
+.empty{padding:22px 16px;color:var(--tx2);font-size:14px}
+.note{padding:14px 16px;border:1px dashed var(--line2);border-radius:var(--r);color:var(--tx2);font-size:13.5px;background:var(--card)}
+
+/* tags */
+.tag{display:inline-flex;align-items:center;gap:5px;font:700 10px/1 var(--sans);letter-spacing:.14em;padding:4px 7px;border:1px solid var(--line2);border-radius:2px;color:var(--tx2);text-transform:uppercase;white-space:nowrap}
+.tag.live{background:var(--red);border-color:var(--red);color:#fff;animation:blink 1.6s ease-in-out infinite}
+.tag.week{border-color:var(--red);color:var(--red-t)}
+.tag.done{border-color:transparent;color:var(--tx3);padding-left:0}
+.tag.next{border-color:var(--tx2);color:var(--tx)}
+.tag.cancel{color:var(--tx3);border-style:dashed}
+.tag.fl{border-color:#8b5cf6;color:#b9a2ff;padding:2px 4px;font-size:9px}
+@keyframes blink{50%{opacity:.55}}
+
+/* photo, team badge, flag */
+.ph{position:relative;display:inline-flex;align-items:flex-end;justify-content:center;overflow:hidden;border-radius:var(--r);background:linear-gradient(180deg,var(--card3),var(--card2));box-shadow:inset 0 -2px 0 var(--tc,#4a4c52);flex:none}
+.ph img{width:100%;height:100%;object-fit:cover;object-position:center top}
+.ph-xs{width:26px;height:26px}.ph-s{width:38px;height:38px}.ph-m{width:50px;height:50px}.ph-l{width:176px;height:176px}
+.sil{width:74%;height:74%;fill:#3b3c42}
+.tb{display:inline-flex;align-items:center;justify-content:center;font:700 11px/1 var(--mono);letter-spacing:.04em;color:var(--tx);background:var(--card2);border:1px solid var(--line2);border-left:3px solid var(--tc,#4a4c52);border-radius:var(--r);width:50px;height:34px;flex:none}
+.tb-l{width:120px;height:80px;font-size:26px;border-left-width:5px}
+.teamtxt{display:inline-flex;align-items:center;gap:7px;color:var(--tx2);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.teamtxt::before{content:"";width:3px;height:12px;background:var(--tc,#4a4c52);flex:none}
+.flag{width:22px;height:15px;object-fit:cover;border-radius:2px;flex:none;box-shadow:0 0 0 1px rgba(255,255,255,.08)}
+.flag-t{display:inline-flex;align-items:center;justify-content:center;font:700 8.5px var(--mono);color:var(--tx2);background:var(--card3)}
+.trk{display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:var(--line2)}
+.trk svg{width:70%;max-height:80%}
+.pos{font:700 15px var(--mono);white-space:nowrap}
+.pos.p1,.rk.p1{color:var(--gold)}.pos.p2,.rk.p2{color:var(--silver)}.pos.p3,.rk.p3{color:var(--bronze)}
+.fl,.fl .muted{color:var(--purple)}.fl-time{color:var(--purple)}
+.pos.dnf{color:var(--amber)}.pos.dsq,.pos.exc{color:var(--red-t)}.pos.dns,.pos.nc,.pos.dnq{color:var(--tx3)}
+
+/* skeleton */
+.sk{background:linear-gradient(90deg,var(--card) 0,var(--card3) 50%,var(--card) 100%);background-size:200% 100%;animation:sk 1.3s infinite linear;border-radius:var(--r)}
+@keyframes sk{from{background-position:200% 0}to{background-position:-200% 0}}
+.sk-line{height:14px;margin:10px 0}
+.sk-block{height:120px;margin-bottom:10px}
+
+/* home */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);overflow:hidden}
+.hero.hot{border-top:3px solid var(--red)}
+.hero-img{background:var(--card2);display:flex;align-items:center;justify-content:center;padding:26px;min-height:280px;border-right:1px solid var(--line)}
+.hero-img img{max-height:300px;width:100%;object-fit:contain}
+.hero-body{padding:24px 28px 26px}
+.hero-title{font-size:clamp(26px,4vw,40px);font-weight:900;text-transform:uppercase;line-height:1.02;margin:10px 0 8px}
+.hero-sub{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:var(--tx2)}
+.hero-facts{display:flex;flex-wrap:wrap;gap:12px 32px;margin:20px 0 18px}
+.hero-facts b{display:block;font:600 18px var(--mono);margin-top:2px}
+.hero-facts small{font-size:12px;color:var(--tx2)}
+.cd{display:flex;gap:8px;margin:8px 0 4px}
+.cd-u{background:var(--card2);border:1px solid var(--line);border-radius:var(--r);min-width:66px;padding:10px 8px 8px;text-align:center}
+.cd-u b{display:block;font:500 30px/1 var(--mono)}
+.cd-u span{font-size:9.5px;letter-spacing:.18em;color:var(--tx3);font-weight:700}
+.hero-next{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);font-size:14px}
+.hero-next b{letter-spacing:.06em}
+.hero-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:20px}
+.champ{display:flex;gap:14px;align-items:center;margin-top:16px}
+.champ b{display:block;font-size:22px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px}
+.ch{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--line)}
+.ch h3{min-width:0;margin:0;font-size:12px;letter-spacing:.14em;font-weight:700;color:var(--tx2);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ch-link{font-size:11px;letter-spacing:.14em;font-weight:700;color:var(--tx3);white-space:nowrap}
+.ch-link:hover{color:var(--red-t)}
+.cb{padding:6px 16px 10px}
+.mini{display:grid;grid-template-columns:34px 38px minmax(0,1fr) auto;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--line)}
+.mini:last-of-type{border-bottom:0}
+.mini:hover{background:var(--card2)}
+.mini-pos{font:700 16px var(--mono)}
+.mini-name{display:flex;flex-direction:column;min-width:0}
+.mini-name b{font-size:15px;letter-spacing:.03em}
+.mini-pts{font:600 14px var(--mono);text-align:right}
+.mini-pts small{display:block;font:700 9.5px var(--sans);letter-spacing:.14em;color:var(--tx3)}
+.mini-foot{padding:10px 16px;border-top:1px solid var(--line);display:flex;gap:8px;align-items:baseline;font-size:13px}
+
+/* schedule */
+.races{display:flex;flex-direction:column;gap:8px}
+.race{background:var(--card);border:1px solid var(--line);border-radius:var(--r);scroll-margin-top:calc(var(--hdr) + 48px)}
+.race.st-live,.race.st-weekend{border-left:3px solid var(--red)}
+.race-head{width:100%;display:grid;grid-template-columns:124px minmax(0,1fr) 190px 132px 16px;grid-template-areas:"img main when status chev";gap:18px;align-items:center;padding:10px 16px 10px 10px}
+.race-head:hover{background:var(--card2)}
+.race-head>.chev{grid-area:chev}
+.race-img{grid-area:img;height:82px;background:var(--card2);border-radius:var(--r);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.race-img img{height:100%;width:100%;object-fit:contain;padding:6px}
+.race-main{grid-area:main;min-width:0}
+.race-round{display:flex;gap:8px;align-items:center;font-size:11px;letter-spacing:.16em;color:var(--red-t);font-weight:700}
+.race-name{display:block;font-size:20px;font-weight:900;text-transform:uppercase;line-height:1.12;margin:3px 0 4px}
+.race-sub{display:flex;align-items:center;gap:7px;color:var(--tx2);font-size:13.5px;flex-wrap:wrap}
+.race-when{grid-area:when;display:flex;flex-direction:column;gap:4px;font:500 13px var(--mono)}
+.race-dates{font-weight:700}
+.race-time{color:var(--tx2)}
+.race-time .lbl{margin-right:4px}
+.race-status{grid-area:status;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.winner{font:500 11px var(--mono);color:var(--tx3)}
+.chev{width:9px;height:9px;border-right:2px solid var(--tx3);border-bottom:2px solid var(--tx3);transform:rotate(45deg);justify-self:end;transition:transform .2s}
+.open>.race-head .chev,.open>.rr-head .chev{transform:rotate(-135deg)}
+.race.st-completed>.race-head{opacity:.5}
+.race.st-completed>.race-head:hover,.race.st-completed.open>.race-head{opacity:.8}
+.race.st-completed .race-img img{filter:grayscale(1)}
+.race.st-completed .race-name{font-weight:700;color:var(--tx2)}
+.race.st-completed .race-round{color:var(--tx3)}
+.race.st-cancelled>.race-head{opacity:.4}
+.race.st-cancelled .race-name{text-decoration:line-through}
+.race-body{border-top:1px solid var(--line);padding:18px 16px 20px}
+.rb-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:26px}
+.rb-title h3{margin:0;font-size:22px;font-weight:900;text-transform:uppercase;line-height:1.1}
+.rb-title .muted{font-size:13.5px;margin-top:4px}
+.official{font:500 11px var(--mono);color:var(--tx3);margin-top:6px;letter-spacing:.02em}
+.wk{margin-top:10px}
+.wk-day+.wk-day{margin-top:14px}
+.wk-dh{font-size:11.5px;letter-spacing:.16em;font-weight:700;color:var(--tx2);padding:6px 0;border-bottom:1px solid var(--line2)}
+.wk-dh span{color:var(--tx3);margin-left:6px}
+.srow{display:grid;grid-template-columns:minmax(0,1fr) auto 84px 84px;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.srow-name{font-weight:700;text-transform:uppercase;font-size:14px;letter-spacing:.04em}
+.srow-time{font:500 14px var(--mono)}
+.srow-time small{color:var(--tx3);font-size:11px}
+.srow-st{justify-self:start}
+.srow-link{font-size:10.5px;letter-spacing:.14em;font-weight:700;color:var(--tx2);justify-self:end;white-space:nowrap}
+.srow-link:hover{color:var(--red-t)}
+.srow.ss-done .srow-name,.srow.ss-done .srow-time{color:var(--tx3)}
+.srow.ss-cancelled .srow-name{text-decoration:line-through;color:var(--tx3)}
+.srow.ss-live .srow-name{color:#fff}
+.cpanel{background:var(--card2);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.cp-img{aspect-ratio:4/3;display:flex;align-items:center;justify-content:center}
+.cp-img img{width:100%;height:100%;object-fit:contain}
+.cp-name{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:15px}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;margin:12px 0 0}
+.facts .fact{min-width:0}
+.fact dt{font-size:10px;letter-spacing:.14em;color:var(--tx3);font-weight:700}
+.fact dd{margin:2px 0 0;font:500 13.5px var(--mono);overflow-wrap:anywhere}
+.fact dd small{color:var(--tx3);font-size:10.5px}
+sup.ref{font:700 8px var(--sans);letter-spacing:.1em;color:var(--tx3);border:1px solid var(--line2);padding:1px 3px;border-radius:2px;margin-left:4px;vertical-align:2px;cursor:help}
+.facts-ld{display:contents}
+.rb-drivers{margin-top:8px}
+.clsgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 28px}
+.cl{display:grid;grid-template-columns:44px 26px minmax(0,1fr) auto 36px;gap:10px;align-items:center;padding:7px 4px;border-bottom:1px solid var(--line)}
+.cl:hover{background:var(--card2)}
+.cl-n{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cl-n b{letter-spacing:.04em}
+.cl-t{font-size:12px;color:var(--tx2);white-space:nowrap}
+.cl-p{font-size:12px;text-align:right;color:var(--tx)}
+.dchips{display:flex;flex-wrap:wrap;gap:6px}
+.dchip{display:inline-flex;align-items:center;gap:8px;padding:4px 10px 4px 4px;border:1px solid var(--line2);border-radius:var(--r);font-size:13px;background:var(--card)}
+.dchip:hover{border-color:var(--tx3)}
+.dchip b{letter-spacing:.04em}
+
+/* standings rows */
+.thead{display:grid;align-items:center;gap:14px;padding:0 14px 8px 13px}
+.thead span{font-size:10px;letter-spacing:.14em;font-weight:700;color:var(--tx3)}
+.list{display:flex;flex-direction:column;gap:6px}
+.drow,.crow{display:grid;align-items:center;gap:14px;padding:8px 14px 8px 10px;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--tc,#4a4c52);border-radius:var(--r)}
+.drow:hover,.crow:hover{background:var(--card2)}
+.g-d{grid-template-columns:40px 50px minmax(0,1.5fr) minmax(0,1fr) 92px 64px 76px}
+.g-c{grid-template-columns:40px 50px minmax(0,1.5fr) minmax(0,1fr) 92px 64px 76px}
+.c-pos{font:700 19px var(--mono);color:var(--tx2)}
+.c-drv{min-width:0;display:flex;flex-direction:column;gap:1px}
+.dname{font-size:17px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dname .given{color:var(--tx2);font-weight:400}
+.dname b{font-weight:900;letter-spacing:.02em;text-transform:uppercase}
+.dnum{font:500 11.5px var(--mono);color:var(--tx3)}
+.c-team{min-width:0}
+.c-pts{text-align:right}
+.c-pts b{font:700 20px var(--mono)}
+.c-pts small,.c-stat small{display:block;font:700 9.5px var(--sans);letter-spacing:.14em;color:var(--tx3)}
+.c-stat{text-align:right}
+.c-stat b{font:600 16px var(--mono)}
+.m-only{display:none}
+.drv-mini{font:500 11.5px var(--mono);color:var(--tx3)}
+
+/* driver + team detail */
+.dhead{display:grid;grid-template-columns:176px minmax(0,1fr);gap:26px;padding:20px;border-top:3px solid var(--tc,#4a4c52)}
+.dh-name{font-size:clamp(28px,5vw,46px);line-height:1;margin:10px 0 6px;text-transform:uppercase;font-weight:900}
+.dh-name .given{display:block;font-weight:400;color:var(--tx2);font-size:.5em;letter-spacing:.04em;margin-bottom:4px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-top:16px}
+.stat{background:var(--card2);padding:12px 14px}
+.stat b{display:block;font:700 26px/1.1 var(--mono);margin-top:4px}
+.rr{background:var(--card);border:1px solid var(--line);border-radius:var(--r);scroll-margin-top:calc(var(--hdr) + 48px)}
+.rr+.rr{margin-top:6px}
+.rr-head{width:100%;display:grid;grid-template-columns:40px 22px minmax(0,1fr) 60px 150px 16px;gap:12px;align-items:center;padding:11px 14px}
+.rr-head:hover:not(:disabled){background:var(--card2)}
+.rr-round{font:500 12px var(--mono);color:var(--tx3)}
+.rr-name{display:flex;gap:10px;align-items:baseline;min-width:0;flex-wrap:wrap}
+.rr-name b{font-size:15px;letter-spacing:.03em}
+.rr-name small{font-size:11px;color:var(--tx3)}
+.rr-pts{text-align:right;font:500 12px var(--mono);color:var(--tx2)}
+.rr-pts b{font-size:15px;color:var(--tx)}
+.rr-pts small{display:block;font-size:10.5px;color:var(--tx3)}
+.rr.future{opacity:.42}
+.rr.future .chev{visibility:hidden}
+.rr-body{border-top:1px solid var(--line);padding:14px}
+.sess-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.sess{background:var(--card2);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.sess.wide{grid-column:1/-1}
+.sess.pending{opacity:.6}
+.sess-h{display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}
+.sess-name{font-weight:900;letter-spacing:.1em;font-size:12.5px;text-transform:uppercase}
+.sess-time{font:500 11px var(--mono);color:var(--tx3)}
+.sess-top{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.sess-big{font:700 28px/1 var(--mono)}
+.kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px 14px}
+.kv b{display:block;font:600 14.5px var(--mono);margin-top:2px;white-space:nowrap}
+.kv b small{color:var(--tx3);font-weight:500;font-size:11px}
+.sess-f{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+.src{font-size:9.5px;letter-spacing:.14em;color:var(--tx3);font-weight:700}
+.sess-f a{font-size:10.5px;letter-spacing:.14em;font-weight:700;color:var(--tx2)}
+.sess-f a:hover{color:var(--red-t)}
+.gain-up{color:#7fd1a0}.gain-down{color:var(--amber)}
+.tdrivers{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.tdrv{display:flex;align-items:center;gap:14px;padding:12px;background:var(--card);border:1px solid var(--line);border-radius:var(--r)}
+.tdrv:hover{background:var(--card2)}
+.tdrv b{display:block;font-size:17px;text-transform:uppercase}
+.tdrv .mono{font-size:14px}
+.trow{display:grid;grid-template-columns:40px 22px minmax(0,1fr) minmax(0,2.2fr) 84px;gap:12px;align-items:center;padding:10px 14px;background:var(--card);border:1px solid var(--line);border-radius:var(--r)}
+.trow+.trow{margin-top:6px}
+.tr-ents{display:flex;flex-wrap:wrap;gap:6px}
+.tr-ent{display:inline-flex;gap:8px;align-items:baseline;padding:4px 8px;border:1px solid var(--line2);border-radius:var(--r);font-size:13px}
+.tr-ent:hover{border-color:var(--tx3)}
+.tr-ent .pos{font-size:13px}
+.tr-ent small{color:var(--tx3);font:500 11px var(--mono)}
+.tr-tot{text-align:right}
+.tr-tot b{font:700 17px var(--mono)}
+.tr-tot small{display:block;font:700 9.5px var(--sans);letter-spacing:.14em;color:var(--tx3)}
+
+/* results */
+.rsel{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;scrollbar-width:thin}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid var(--line2);border-radius:var(--r);font:600 12px var(--mono);white-space:nowrap;color:var(--tx2);background:var(--card);flex:none}
+.chip:hover{color:var(--tx)}
+.chip.on{border-color:var(--red);color:var(--tx);background:var(--red-d)}
+.res-head{margin:18px 0 0}
+.res-head h2{margin:0;font-size:24px;font-weight:900;text-transform:uppercase;line-height:1.1}
+.tabs{display:flex;border-bottom:1px solid var(--line);margin:12px 0 0;overflow-x:auto}
+.tab{padding:12px 14px;font-weight:700;font-size:12px;letter-spacing:.12em;color:var(--tx2);border-bottom:2px solid transparent;white-space:nowrap;margin-bottom:-1px}
+.tab:hover{color:var(--tx)}
+.tab.on{color:var(--tx);border-bottom-color:var(--red)}
+.tab.dis{color:var(--tx3);opacity:.55;pointer-events:none}
+.tblwrap{overflow-x:auto}
+table.rt{width:100%;border-collapse:collapse;font-size:14px;margin-top:4px}
+.rt th{font:700 10px var(--sans);letter-spacing:.14em;color:var(--tx3);text-align:left;padding:10px 8px;border-bottom:1px solid var(--line2);white-space:nowrap}
+.rt td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.rt .r{text-align:right}
+.rt tr[data-go]{cursor:pointer}
+.rt tr[data-go]:hover td{background:var(--card2)}
+.dcell{display:flex;align-items:center;gap:10px;min-width:0}
+.dcell b{letter-spacing:.04em}
+.res-src{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:10px}
+
+footer.foot{max-width:1200px;margin:0 auto;padding:20px 20px 110px;color:var(--tx3);font-size:12px;border-top:1px solid var(--line)}
+footer.foot a{color:var(--tx2);text-decoration:underline}
+.bnav{display:none}
+
+@media (max-width:980px){
+  .g-d,.g-c{grid-template-columns:36px 50px minmax(0,1fr) 84px 56px 70px}
+  .c-team{display:none}.t-team{display:none}
+  .drow .teamtxt.m-show,.crow .m-show{display:inline-flex}
+}
+@media (max-width:860px){
+  .hero{grid-template-columns:minmax(0,1fr)}
+  .hero-img{min-height:180px;border-right:0;border-bottom:1px solid var(--line)}
+  .hero-img img{max-height:190px}
+  .grid3{grid-template-columns:minmax(0,1fr)}
+  .rb-grid{grid-template-columns:minmax(0,1fr)}
+  .clsgrid{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:760px){
+  :root{--hdr:52px}
+  .top-in{gap:12px;padding:0 16px}
+  .nav{display:none}
+  .brand{font-size:15px}
+  .brand small{display:none}
+  .ctrls{gap:6px}
+  .sel.sel-lang{max-width:54px}
+  .sel{max-width:118px;padding:7px 20px 7px 8px;font-size:10.5px;letter-spacing:.02em;background-position:right 6px center}
+  .sb-in{padding:6px 16px;gap:2px 12px;font-size:11px}
+  .banner{padding:0 16px 8px}
+  main{padding:18px 16px 96px}
+  footer.foot{padding:18px 16px 100px}
+  .bnav{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:30;background:#0c0c0f;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+  .bnav a{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 0 8px;font-size:9px;letter-spacing:.1em;font-weight:700;color:var(--tx3)}
+  .bnav a.on{color:var(--tx)}
+  .bnav a.on svg{stroke:var(--red)}
+  .bnav svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .hero-body{padding:18px 16px 20px}
+  .cd-u{min-width:0;flex:1}
+  .cd-u b{font-size:24px}
+  .race-head{grid-template-columns:72px minmax(0,1fr) 14px;grid-template-areas:"img main chev" "when when when" "status status status";gap:8px 12px;padding:10px 12px 12px 10px}
+  .race-img{height:54px}
+  .race-name{font-size:17px}
+  .race-when{flex-direction:row;flex-wrap:wrap;gap:4px 14px;font-size:12.5px}
+  .race-status{flex-direction:row;align-items:center;gap:10px}
+  .race-body{padding:14px 12px 16px}
+  .srow{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"n st" "t l";gap:4px 10px}
+  .srow-name{grid-area:n}.srow-st{grid-area:st;justify-self:end}.srow-time{grid-area:t}.srow-link{grid-area:l}
+  .srow>span:empty{display:none}
+  .g-d,.g-c{grid-template-columns:30px 42px minmax(0,1fr) auto;gap:10px;padding:8px 10px 8px 8px}
+  .ph-m{width:42px;height:42px}
+  .c-stat{display:none}.thead{display:none}
+  .m-only{display:block}
+  .dname{font-size:15.5px}
+  .c-pos{font-size:16px}
+  .dhead{grid-template-columns:96px minmax(0,1fr);gap:14px;padding:14px}
+  .dhead .ph-l{width:96px;height:96px}
+  .tb-l{width:84px;height:60px;font-size:19px}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr));grid-column:1/-1}
+  .rr-head{grid-template-columns:34px 20px minmax(0,1fr) 46px 16px;grid-template-areas:"r f n p c" ". . pts pts .";gap:4px 10px;padding:10px 12px}
+  .rr-head>.rr-round{grid-area:r}.rr-head>.flag,.rr-head>.flag-t{grid-area:f}.rr-head>.rr-name{grid-area:n}.rr-head>.pos{grid-area:p;text-align:right}.rr-head>.rr-pts{grid-area:pts;text-align:left}.rr-head>.chev{grid-area:c}
+  .rr-pts small{display:inline;margin-left:6px}
+  .sess-grid{grid-template-columns:1fr}
+  .trow{grid-template-columns:34px 20px minmax(0,1fr) 64px;grid-template-areas:"r f g t" "e e e e"}
+  .trow>.rr-round{grid-area:r}.trow>.flag,.trow>.flag-t{grid-area:f}.trow>.tr-gp{grid-area:g}.trow>.tr-tot{grid-area:t}.trow>.tr-ents{grid-area:e}
+  .hs{display:none}
+  .rt td,.rt th{padding:8px 5px}
+  .h1{font-size:30px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <a class="brand" href="#/" data-nav="home"><span class="brand-bar"></span><span>PITWALL<small id="brandSeason">F1 SEASON</small></span></a>
+    <nav class="nav" id="nav" aria-label="Main">
+      <a data-nav="home" data-t="HOME">HOME</a><a data-nav="schedule" data-t="SCHEDULE">SCHEDULE</a><a data-nav="drivers" data-t="DRIVERS">DRIVERS</a><a data-nav="constructors" data-t="CONSTRUCTORS">CONSTRUCTORS</a><a data-nav="results" data-t="RESULTS">RESULTS</a>
+    </nav>
+    <div class="ctrls">
+      <label class="sr" for="langSel">Language</label><select id="langSel" class="sel sel-lang" title="Language"><option value="ko">KO</option><option value="en">EN</option></select>
+      <label class="sr" for="seasonSel">Season</label><select id="seasonSel" class="sel" title="Season"></select>
+      <label class="sr" for="tzSel">Timezone</label><select id="tzSel" class="sel" title="Timezone"></select>
+    </div>
+  </div>
+</header>
+<div id="status"></div>
+<main id="view"></main>
+<footer class="foot" id="foot"></footer>
+<nav class="bnav" id="bnav" aria-label="Main">
+  <a data-nav="home"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span data-t="HOME">HOME</span></a>
+  <a data-nav="schedule"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="1"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span data-t="SCHEDULE">SCHEDULE</span></a>
+  <a data-nav="drivers"><svg viewBox="0 0 24 24"><path d="M4 16a8 8 0 0 1 15.5-3.2L21 16v2H6a2 2 0 0 1-2-2z"/><path d="M11 12h9"/></svg><span data-t="DRIVERS">DRIVERS</span></a>
+  <a data-nav="constructors"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg><span data-t="TEAMS">TEAMS</span></a>
+  <a data-nav="results"><svg viewBox="0 0 24 24"><path d="M5 21V4h13l-2.5 4L18 12H5"/></svg><span data-t="RESULTS">RESULTS</span></a>
+</nav>
+
+<script>
+(() => {
+'use strict';
+
+/* =====================================================================
+   1. CONFIG & REFERENCE TABLES
+   ===================================================================== */
+const CFG = {
+  JOLPICA: 'https://api.jolpi.ca/ergast/f1/',
+  OPENF1: 'https://api.openf1.org/v1/',
+  MIN_SEASON: 2023,          // OpenF1 historical coverage starts in 2023
+  TIMEOUT: 15000,
+  PFX: 'pw1:',               // localStorage cache prefix
+};
+const MIN = 6e4, HOUR = 36e5, DAY = 864e5;
+
+// dur (minutes) is ONLY used to estimate a session's end for LIVE/DONE status when
+// OpenF1 has not provided date_end. It is never displayed as a session time.
+const SESSION_META = {
+  FP1: { name: 'Free Practice 1', tab: 'FP1', dur: 60 },
+  FP2: { name: 'Free Practice 2', tab: 'FP2', dur: 60 },
+  FP3: { name: 'Free Practice 3', tab: 'FP3', dur: 60 },
+  SQ:  { name: 'Sprint Qualifying', tab: 'SPRINT QUALI', dur: 45 },
+  SPR: { name: 'Sprint', tab: 'SPRINT', dur: 60 },
+  Q:   { name: 'Qualifying', tab: 'QUALIFYING', dur: 60 },
+  R:   { name: 'Race', tab: 'RACE', dur: 120 },
+};
+const OF1_SESSION_MAP = { 'Practice 1': 'FP1', 'Practice 2': 'FP2', 'Practice 3': 'FP3', 'Sprint Qualifying': 'SQ', 'Sprint Shootout': 'SQ', 'Sprint': 'SPR', 'Qualifying': 'Q', 'Race': 'R' };
+
+const TZ_OPTIONS = [
+  ['Asia/Seoul', 'KST'], ['UTC', 'UTC'], ['Europe/London', 'UK'], ['Europe/Paris', 'CET'],
+  ['America/New_York', 'ET'], ['America/Chicago', 'CT'], ['America/Los_Angeles', 'PT'],
+  ['Asia/Tokyo', 'JST'], ['Australia/Sydney', 'AET'], ['local', 'LOCAL'],
+];
+
+// Local fallback: neither Jolpica nor OpenF1 exposes circuit length. Official published lap
+// lengths (km) for circuits where the figure is well established. Missing circuits show "—".
+const CIRCUIT_LENGTH_KM = {
+  albert_park: 5.278, shanghai: 5.451, suzuka: 5.807, bahrain: 5.412, jeddah: 6.174, miami: 5.412,
+  imola: 4.909, villeneuve: 4.361, monaco: 3.337, catalunya: 4.657, red_bull_ring: 4.318,
+  silverstone: 5.891, spa: 7.004, hungaroring: 4.381, zandvoort: 4.259, monza: 5.793, baku: 6.003,
+  sepang: 5.543, americas: 5.513, rodriguez: 4.304, interlagos: 4.309, vegas: 6.201, losail: 5.419,
+  yas_marina: 5.281,
+};
+const CN_ALIAS = { 'uk': 'united kingdom', 'great britain': 'united kingdom', 'usa': 'united states', 'united states of america': 'united states', 'uae': 'united arab emirates', 'korea': 'south korea', 'the netherlands': 'netherlands' };
+const COUNTRY_ISO = {
+  'australia': 'au', 'china': 'cn', 'japan': 'jp', 'united states': 'us', 'canada': 'ca', 'monaco': 'mc', 'spain': 'es',
+  'austria': 'at', 'united kingdom': 'gb', 'belgium': 'be', 'hungary': 'hu', 'netherlands': 'nl', 'italy': 'it',
+  'azerbaijan': 'az', 'malaysia': 'my', 'singapore': 'sg', 'mexico': 'mx', 'brazil': 'br', 'qatar': 'qa',
+  'united arab emirates': 'ae', 'bahrain': 'bh', 'saudi arabia': 'sa', 'france': 'fr', 'germany': 'de',
+  'portugal': 'pt', 'russia': 'ru', 'turkey': 'tr', 'argentina': 'ar', 'south africa': 'za', 'south korea': 'kr',
+  'india': 'in', 'vietnam': 'vn', 'sweden': 'se', 'switzerland': 'ch', 'morocco': 'ma', 'thailand': 'th',
+};
+const TEAM_SHORT = { mercedes: 'MER', ferrari: 'FER', mclaren: 'MCL', red_bull: 'RBR', aston_martin: 'AMR', alpine: 'ALP', williams: 'WIL', haas: 'HAA', rb: 'RB', racing_bulls: 'RB', sauber: 'SAU', audi: 'AUD', cadillac: 'CAD', alphatauri: 'AT', alfa: 'ALF' };
+
+/* =====================================================================
+   2. SMALL UTILITIES
+   ===================================================================== */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const enc = encodeURIComponent;
+const num = v => { if (v === null || v === undefined || v === '') return null; const n = Number(v); return Number.isFinite(n) ? n : null; };
+const int = v => { const n = parseInt(v, 10); return Number.isFinite(n) ? n : null; };
+const pad = n => String(n).padStart(2, '0');
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const fmtPts = v => { const n = num(v) ?? 0; return Number.isInteger(n) ? String(n) : n.toFixed(1); };
+const normCountry = c => { const k = String(c || '').trim().toLowerCase(); return CN_ALIAS[k] || k; };
+const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 'S'}`;
+const shortGP = n => String(n || '').replace(/Grand Prix/i, 'GP');
+const makeAbort = () => Object.assign(new Error('cancelled'), { name: 'AbortError', cancelled: true });
+const isAbort = e => !!(e && e.cancelled);
+
+function fmtSec(v) {
+  const n = num(v); if (n == null) return '—';
+  let s = Math.abs(n); const h = Math.floor(s / 3600); s -= h * 3600; const m = Math.floor(s / 60); s -= m * 60;
+  const ss = s.toFixed(3).padStart(6, '0');
+  return (n < 0 ? '-' : '') + (h ? `${h}:${pad(m)}:${ss}` : m ? `${m}:${ss}` : s.toFixed(3));
+}
+function fmtGap(g) {
+  if (g == null || g === '') return '—';
+  if (typeof g === 'string' && num(g) == null) return g.toUpperCase();
+  const n = num(g); if (n == null || n === 0) return '—';
+  return '+' + n.toFixed(3);
+}
+function lapMs(t) {
+  if (!t) return null;
+  const p = String(t).split(':').map(Number);
+  if (!p.length || p.some(x => !Number.isFinite(x))) return null;
+  return Math.round(p.reduce((a, x) => a * 60 + x, 0) * 1000);
+}
+
+/* =====================================================================
+   1b. I18N  (UI text only — driver, team and circuit names stay as the APIs send them)
+   ===================================================================== */
+const EN = {
+  'msg.heroLive': 'in progress per the official schedule · free APIs have no live timing — results appear after the session',
+  'msg.inProgress': 'In progress. The free APIs don’t provide live timing — the classification appears after the session.',
+  'msg.liveBanner': 'is running per the official schedule. Free data sources are historical only — no live timing; classifications appear after the session.',
+  'msg.of1Season': 'OpenF1 covers the 2023 season onward.',
+  'msg.of1Live': 'OpenF1 pauses free access while a session is live (30 min before start to 30 min after the end). This loads after the window.',
+  'msg.of1LiveCached': 'OpenF1 pauses free access while a session is live (30 min before start to 30 min after the end). Showing cached data only; this loads after the window.',
+  'msg.of1Failed': 'OpenF1 session data could not be loaded.',
+  'msg.of1NoData': 'OpenF1 has no data for this session yet.',
+  'msg.of1Down': 'OpenF1 is temporarily unavailable. Try again shortly.',
+  'msg.jolNotYet': 'Jolpica has not published this classification yet. ',
+  'msg.noCls': 'No classification published for this session yet.',
+  'msg.rate': 'Rate limit reached on the free API. Try again in a minute.',
+  'msg.http': 'Unable to load (HTTP {0}).',
+  'msg.net': 'Unable to load latest data (network error).',
+  'msg.noCache': 'The API did not respond and no cached copy exists on this device yet.',
+  'msg.coreDown': 'The Jolpica F1 API did not respond ({0}) and there is no cached copy on this device yet.',
+  'msg.sessLive': '{0} is in progress per the official schedule. The free APIs don’t provide live timing — the classification appears after the session.',
+  'msg.footer': 'Data: <a href="https://github.com/jolpica/jolpica-f1" target="_blank" rel="noopener">Jolpica F1 API</a> (primary) and <a href="https://openf1.org" target="_blank" rel="noopener">OpenF1</a> (historical, free tier — paused while a session is live). Live timing is not included. Circuit lengths marked <b>REF</b> come from a built-in reference table because neither API provides them. Unofficial fan project, not associated with the Formula 1 companies.',
+};
+const KO = {
+  'HOME': '홈', 'SCHEDULE': '일정', 'DRIVERS': '드라이버', 'CONSTRUCTORS': '컨스트럭터', 'RESULTS': '결과', 'TEAMS': '팀',
+  'F1 {0} SEASON': 'F1 {0} 시즌', 'SEASON OVERVIEW': '시즌 개요', 'CURRENT ROUND': '현재 라운드',
+  'DRIVERS · TOP 3': '드라이버 · TOP 3', 'CONSTRUCTORS · TOP 3': '컨스트럭터 · TOP 3', 'LAST RACE': '지난 레이스', 'LAST RACE RESULT': '지난 레이스 결과',
+  'ALL →': '전체 →', 'NEXT RACE': '다음 레이스', 'WEEKEND SCHEDULE': '주말 일정', 'SCHEDULE →': '일정 →', 'RACE WEEKEND': '레이스 주말',
+  'THIS WEEKEND': '이번 주말', 'ROUND': '라운드', 'NEXT SESSION': '다음 세션', 'DATE': '날짜', 'RACE TIME': '결승 시작', 'WEEKEND': '주말',
+  'COUNTDOWN TO RACE START': '결승까지 남은 시간', 'FULL WEEKEND SCHEDULE →': '주말 전체 일정 →', 'SPRINT WEEKEND': '스프린트 주말', 'TBC': '미정',
+  'SEASON COMPLETE': '시즌 종료', '{0} World Championship': '{0} 월드 챔피언십', "DRIVERS' CHAMPION": '드라이버 챔피언', 'PTS': '점',
+  'FASTEST LAP': '패스티스트 랩', 'DAYS': '일', 'HRS': '시간', 'MIN': '분', 'SEC': '초',
+  'Standings will appear after the first race.': '첫 레이스 후에 순위가 표시됩니다.', 'No race results yet this season.': '이번 시즌 레이스 결과가 아직 없습니다.',
+  'The calendar for this season has not been published yet.': '이 시즌 일정이 아직 공개되지 않았습니다.',
+  '{0} CALENDAR': '{0} 캘린더', '{0} CALENDAR · {1} ROUNDS': '{0} 캘린더 · {1}개 라운드', 'Schedule': '일정', '{0} COMPLETED': '완료 {0}',
+  '{0} REMAINING': '남은 레이스 {0}', '{0} CANCELLED': '취소 {0}', 'TIMES IN {0}': '{0} 기준 시간', 'SPRINT': '스프린트', 'RACE': '결승',
+  'WINNER': '우승', 'RESULTS PENDING': '결과 대기 중', 'Weekend schedule': '주말 일정', 'SPRINT FORMAT': '스프린트 포맷', 'CITY': '위치',
+  'CIRCUIT TYPE': '서킷 유형', 'LENGTH': '길이', 'TRACK TIME': '현지 시간대', 'LAPS': '랩 수', 'RACE DISTANCE': '레이스 거리', 'THIS RACE': '이번 레이스',
+  '{0} RACE': '{0}년 결승', 'Permanent': '상설 서킷', 'Temporary - Street': '시가지 서킷', 'Temporary - Road': '임시 로드 서킷',
+  'Built-in reference value — not provided by the APIs': '앱 내장 참고값 — API에서 제공하지 않음', 'Length (reference) × laps (API)': '길이(참고값) × 랩 수(API)',
+  'RESULTS →': '결과 →', 'Race classification · select a driver': '결승 순위 · 드라이버 선택', 'FULL RESULTS →': '전체 결과 →',
+  'Drivers · championship order': '드라이버 · 챔피언십 순위', 'Select a driver for this weekend’s sessions': '드라이버를 누르면 이번 주말 세션 결과',
+  'Select a driver for their season profile': '드라이버를 누르면 시즌 프로필',
+  '✓ COMPLETED': '✓ 완료', 'RACE WEEK': '레이스 주간', 'UPCOMING': '예정', 'CANCELLED': '취소', '✓ DONE': '✓ 종료', 'NEXT': '다음',
+  'Free Practice 1': '1차 연습 주행', 'Free Practice 2': '2차 연습 주행', 'Free Practice 3': '3차 연습 주행', 'Sprint Qualifying': '스프린트 예선',
+  'Sprint Shootout': '스프린트 슛아웃', 'Sprint': '스프린트', 'Qualifying': '예선', 'Race': '결승',
+  'SPRINT QUALI': '스프린트 예선', 'QUALIFYING': '예선',
+  'DRIVER CHAMPIONSHIP': '드라이버 챔피언십', 'Drivers': '드라이버', 'AFTER ROUND {0}': '{0}라운드 기준', 'The championship has not started yet.': '아직 챔피언십이 시작되지 않았습니다.',
+  'POS': '순위', 'DRIVER': '드라이버', 'TEAM': '팀', 'POINTS': '포인트', 'WINS': '우승', 'PODIUMS': '포디움', 'POSITION': '순위',
+  '{0} SEASON': '{0} 시즌', 'Season results': '시즌 결과', 'Select a race for FP / qualifying / race results': '레이스를 누르면 연습·예선·결승 결과',
+  'NO RACE RESULT': '결승 기록 없음', 'WEEKEND UNDERWAY': '주말 진행 중',
+  'No entries for this driver in the {0} season.': '{0} 시즌 이 드라이버의 출전 기록이 없습니다.', 'Driver data is not available yet.': '드라이버 데이터를 아직 불러오지 못했습니다.',
+  'BEST LAP': '베스트 랩', 'GAP': '격차', 'FINAL': '최종', 'RACE GRID': '결승 그리드', 'PIT LANE': '피트 레인', 'GRID': '그리드', 'FINISH': '결과',
+  'GAIN': '순위 변동', 'STATUS': '상태', 'PIT STOPS': '피트 스톱', 'TIME': '기록', 'TIME / GAP': '기록 / 격차', 'TIME / STATUS': '기록 / 상태',
+  'FULL CLASSIFICATION →': '전체 순위 →', 'SOURCE': '출처', 'Session cancelled.': '취소된 세션입니다.', 'Not started yet.': '아직 시작하지 않았습니다.',
+  'Round not found.': '라운드를 찾을 수 없습니다.', 'No classified result for this driver in this session.': '이 세션에 이 드라이버의 기록이 없습니다.',
+  'CONSTRUCTOR CHAMPIONSHIP': '컨스트럭터 챔피언십', 'Constructors': '컨스트럭터', 'CONSTRUCTOR': '컨스트럭터',
+  'Points scored for this team (race + sprint)': '이 팀에서 얻은 포인트 (결승 + 스프린트)', 'Race-by-race': '레이스별 결과',
+  'Team total = race + sprint points from the API': '팀 합계 = API의 결승 + 스프린트 포인트', 'TEAM PTS': '팀 포인트', 'No driver entries yet.': '아직 출전 기록이 없습니다.',
+  'No entries for this team in the {0} season.': '{0} 시즌 이 팀의 출전 기록이 없습니다.', 'Team data is not available yet.': '팀 데이터를 아직 불러오지 못했습니다.',
+  'SPR': '스프린트', '{0} RESULTS · SELECT ROUND': '{0} 결과 · 라운드 선택', 'Results': '결과', 'No sessions have run yet this season.': '이번 시즌 진행된 세션이 아직 없습니다.',
+  'PIT': '피트', 'SELECT A DRIVER FOR THEIR WEEKEND': '드라이버를 누르면 주말 전체 결과',
+  'LAST UPDATED': '마지막 업데이트', 'N/A': '해당 없음', 'PAUSED · LIVE SESSION': '일시 중단 · 세션 진행 중', 'UNAVAILABLE': '사용 불가', 'OK': '정상',
+  'CACHED': '저장된 데이터', 'ERROR': '오류', 'UPDATING…': '업데이트 중…', 'REFRESH': '새로고침', 'Unable to load latest data.': '최신 데이터를 불러오지 못했습니다.',
+  'Retry': '다시 시도', 'Last successful update: {0}': '마지막 성공: {0}', 'SHOWING CACHED DATA': '저장된 데이터 표시 중', 'DATA UNAVAILABLE': '데이터 없음',
+  'Something went wrong while rendering this view.': '화면을 표시하는 중 문제가 생겼습니다.', 'Unable to load {0}.': '{0}을(를) 불러오지 못했습니다.',
+  'driver standings': '드라이버 순위', 'constructor standings': '컨스트럭터 순위', 'race results': '레이스 결과', 'Unavailable.': '사용할 수 없습니다.',
+  'LOCAL': '내 기기',
+  'msg.heroLive': '공식 일정상 진행 중 · 무료 API는 실시간 타이밍이 없어 세션이 끝난 뒤 결과가 표시됩니다',
+  'msg.inProgress': '진행 중입니다. 무료 API는 실시간 타이밍을 제공하지 않아 세션이 끝난 뒤 순위가 표시됩니다.',
+  'msg.liveBanner': '공식 일정상 진행 중입니다. 무료 데이터는 지난 기록만 제공해 실시간 타이밍이 없고, 세션이 끝난 뒤 순위가 표시됩니다.',
+  'msg.of1Season': 'OpenF1은 2023 시즌부터 데이터를 제공합니다.',
+  'msg.of1Live': 'OpenF1 무료 이용은 세션 진행 중(시작 30분 전 ~ 종료 30분 후)에 일시 중단됩니다. 그 이후에 불러옵니다.',
+  'msg.of1LiveCached': 'OpenF1 무료 이용은 세션 진행 중(시작 30분 전 ~ 종료 30분 후)에 일시 중단됩니다. 저장된 데이터만 표시하며, 그 이후에 불러옵니다.',
+  'msg.of1Failed': 'OpenF1 세션 데이터를 불러오지 못했습니다.',
+  'msg.of1NoData': 'OpenF1에 아직 이 세션 데이터가 없습니다.',
+  'msg.of1Down': 'OpenF1을 잠시 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.',
+  'msg.jolNotYet': 'Jolpica에 아직 이 순위가 올라오지 않았습니다. ',
+  'msg.noCls': '이 세션의 순위가 아직 공개되지 않았습니다.',
+  'msg.rate': '무료 API 요청 한도에 도달했습니다. 1분 후 다시 시도해 주세요.',
+  'msg.http': '불러오지 못했습니다 (HTTP {0}).',
+  'msg.net': '최신 데이터를 불러오지 못했습니다 (네트워크 오류).',
+  'msg.noCache': 'API가 응답하지 않았고 이 기기에 저장된 데이터도 없습니다.',
+  'msg.coreDown': 'Jolpica F1 API가 응답하지 않았고({0}) 이 기기에 저장된 데이터도 없습니다.',
+  'msg.sessLive': '공식 일정상 {0} 진행 중입니다. 무료 API는 실시간 타이밍을 제공하지 않아 세션이 끝난 뒤 순위가 표시됩니다.',
+  'msg.footer': '데이터: <a href="https://github.com/jolpica/jolpica-f1" target="_blank" rel="noopener">Jolpica F1 API</a>(주 데이터), <a href="https://openf1.org" target="_blank" rel="noopener">OpenF1</a>(지난 기록, 무료 등급 — 세션 진행 중에는 일시 중단). 실시간 타이밍은 포함되지 않습니다. <b>REF</b> 표시가 있는 서킷 길이는 두 API 모두 제공하지 않아 앱에 내장된 참고값입니다. Formula 1과 관계없는 비공식 팬 프로젝트입니다.',
+};
+const GP_KO = {
+  'Australian Grand Prix': '호주 그랑프리', 'Chinese Grand Prix': '중국 그랑프리', 'Japanese Grand Prix': '일본 그랑프리', 'Bahrain Grand Prix': '바레인 그랑프리',
+  'Saudi Arabian Grand Prix': '사우디아라비아 그랑프리', 'Miami Grand Prix': '마이애미 그랑프리', 'Emilia Romagna Grand Prix': '에밀리아로마냐 그랑프리',
+  'Monaco Grand Prix': '모나코 그랑프리', 'Canadian Grand Prix': '캐나다 그랑프리', 'Spanish Grand Prix': '스페인 그랑프리', 'Barcelona Grand Prix': '바르셀로나 그랑프리',
+  'Austrian Grand Prix': '오스트리아 그랑프리', 'British Grand Prix': '영국 그랑프리', 'Belgian Grand Prix': '벨기에 그랑프리', 'Hungarian Grand Prix': '헝가리 그랑프리',
+  'Dutch Grand Prix': '네덜란드 그랑프리', 'Italian Grand Prix': '이탈리아 그랑프리', 'Azerbaijan Grand Prix': '아제르바이잔 그랑프리', 'Singapore Grand Prix': '싱가포르 그랑프리',
+  'United States Grand Prix': '미국 그랑프리', 'Mexico City Grand Prix': '멕시코시티 그랑프리', 'São Paulo Grand Prix': '상파울루 그랑프리', 'Brazilian Grand Prix': '브라질 그랑프리',
+  'Las Vegas Grand Prix': '라스베이거스 그랑프리', 'Qatar Grand Prix': '카타르 그랑프리', 'Abu Dhabi Grand Prix': '아부다비 그랑프리',
+  'Bahrain Grand Prix in Malaysia': '바레인 그랑프리 (말레이시아 개최)', 'Madrid Grand Prix': '마드리드 그랑프리',
+};
+const COUNTRY_KO = {
+  'australia': '호주', 'china': '중국', 'japan': '일본', 'united states': '미국', 'canada': '캐나다', 'monaco': '모나코', 'spain': '스페인', 'austria': '오스트리아',
+  'united kingdom': '영국', 'belgium': '벨기에', 'hungary': '헝가리', 'netherlands': '네덜란드', 'italy': '이탈리아', 'azerbaijan': '아제르바이잔', 'malaysia': '말레이시아',
+  'singapore': '싱가포르', 'mexico': '멕시코', 'brazil': '브라질', 'qatar': '카타르', 'united arab emirates': '아랍에미리트', 'bahrain': '바레인', 'saudi arabia': '사우디아라비아',
+  'france': '프랑스', 'germany': '독일', 'portugal': '포르투갈', 'turkey': '튀르키예',
+};
+const CITY_KO = {
+  'Melbourne': '멜버른', 'Shanghai': '상하이', 'Suzuka': '스즈카', 'Sakhir': '사키르', 'Jeddah': '제다', 'Miami': '마이애미', 'Imola': '이몰라', 'Montreal': '몬트리올',
+  'Monte-Carlo': '몬테카를로', 'Monte Carlo': '몬테카를로', 'Montmeló': '몬트멜로', 'Barcelona': '바르셀로나', 'Spielberg': '슈필베르크', 'Silverstone': '실버스톤', 'Spa': '스파',
+  'Budapest': '부다페스트', 'Zandvoort': '잔드보르트', 'Monza': '몬차', 'Madrid': '마드리드', 'Baku': '바쿠', 'Kuala Lumpur': '쿠알라룸푸르', 'Marina Bay': '마리나 베이',
+  'Singapore': '싱가포르', 'Austin': '오스틴', 'Mexico City': '멕시코시티', 'São Paulo': '상파울루', 'Las Vegas': '라스베이거스', 'Lusail': '루사일', 'Abu Dhabi': '아부다비', 'Yas Marina': '야스 마리나',
+};
+const STATUS_KO = {
+  'Finished': '완주', 'Lapped': '랩 다운', 'Retired': '리타이어', 'Did not start': '출발 못함', 'Disqualified': '실격', 'Withdrew': '기권', 'Not classified': '미분류',
+  'Accident': '사고', 'Collision': '충돌', 'Collision damage': '충돌 손상', 'Engine': '엔진', 'Gearbox': '기어박스', 'Hydraulics': '유압 계통', 'Power Unit': '파워 유닛',
+  'Brakes': '브레이크', 'Suspension': '서스펜션', 'Spun off': '스핀', 'Electrical': '전기 계통', 'Puncture': '펑크', 'Overheating': '과열', 'Fuel pressure': '연료 압력',
+};
+function L(s, ...a) {
+  let v = S.lang === 'ko' && Object.prototype.hasOwnProperty.call(KO, s) ? KO[s] : Object.prototype.hasOwnProperty.call(EN, s) ? EN[s] : s;
+  a.forEach((x, i) => { v = v.split('{' + i + '}').join(String(x)); });
+  return v;
+}
+const gpName = r => { const n = (r && r.name) || ''; return S.lang === 'ko' && GP_KO[n] ? GP_KO[n] : n; };
+const gpShort = r => S.lang === 'ko' ? gpName(r).replace('그랑프리', 'GP') : shortGP(r && r.name);
+const countryName = c => S.lang === 'ko' ? (COUNTRY_KO[normCountry(c)] || c) : c;
+const cityName = c => S.lang === 'ko' ? (CITY_KO[c] || c) : c;
+const placeName = r => [cityName(r.locality), countryName(r.country)].filter(Boolean).join(', ');
+function statusText(s) {
+  if (S.lang !== 'ko' || !s) return s;
+  const m = /^\+(\d+) Laps?$/.exec(s); if (m) return `+${m[1]}랩`;
+  return STATUS_KO[s] || s;
+}
+const nWins = n => S.lang === 'ko' ? `${n}승` : plural(n, 'WIN');
+const nPods = n => S.lang === 'ko' ? `포디움 ${n}` : plural(n, 'PODIUM');
+
+/* =====================================================================
+   3. STORAGE + CACHE  (localStorage persisted, in-memory mirror)
+   ===================================================================== */
+const LS = (() => {
+  let ok = false;
+  try { const k = '__pw_t'; localStorage.setItem(k, '1'); localStorage.removeItem(k); ok = true; } catch (e) { /* storage unavailable */ }
+  function evict() {
+    try {
+      const items = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(CFG.PFX)) { let t = 0; try { t = JSON.parse(localStorage.getItem(k)).t || 0; } catch (e) {} items.push([k, t]); }
+      }
+      items.sort((a, b) => a[1] - b[1]);
+      items.slice(0, Math.max(4, Math.ceil(items.length / 3))).forEach(([k]) => localStorage.removeItem(k));
+    } catch (e) {}
+  }
+  return {
+    get(k) { if (!ok) return null; try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } },
+    set(k, v) {
+      if (!ok) return; let s; try { s = JSON.stringify(v); } catch (e) { return; }
+      try { localStorage.setItem(k, s); } catch (e) { evict(); try { localStorage.setItem(k, s); } catch (e2) {} }
+    },
+  };
+})();
+
+const MEM = new Map();
+let DATA_VER = 0;
+function cacheRead(key) {
+  if (MEM.has(key)) return MEM.get(key);
+  const v = LS.get(CFG.PFX + key);
+  if (v && typeof v.t === 'number') { MEM.set(key, v); return v; }
+  return null;
+}
+function cacheWrite(key, d) { const v = { t: Date.now(), d }; MEM.set(key, v); LS.set(CFG.PFX + key, v); DATA_VER++; return v; }
+const peek = key => cacheRead(key)?.d ?? null;
+
+// Fresh cache -> network -> stale cache -> throw
+async function cached(key, ttl, loader, opt = {}) {
+  const c = cacheRead(key);
+  if (c && !opt.force && Date.now() - c.t < ttl) return c.d;
+  try {
+    const d = await loader(opt.signal);
+    cacheWrite(key, d);
+    return d;
+  } catch (e) {
+    if (isAbort(e)) throw e;
+    if (c) return c.d;
+    throw e;
+  }
+}
+
+/* =====================================================================
+   4. HTTP LAYER  (rate-limited lanes, dedupe, timeout, cancellation)
+   ===================================================================== */
+const HEALTH = { jolpica: { ok: null, last: null, err: null }, openf1: { ok: null, last: null, err: null } };
+function markHealth(host, ok, err) {
+  const h = HEALTH[host];
+  h.ok = ok;
+  if (ok) { h.last = Date.now(); h.err = null; } else h.err = err ? err.message : 'error';
+  queueStatus();
+}
+
+function makeLane(minGap, perMin) {
+  const q = []; const stamps = []; let busy = false;
+  async function pump() {
+    if (busy) return; busy = true;
+    try {
+      while (q.length) {
+        const job = q.shift();
+        if (job.signal && job.signal.aborted) { job.reject(makeAbort()); continue; }
+        const now = Date.now();
+        while (stamps.length && now - stamps[0] >= 60e3) stamps.shift();
+        let wait = stamps.length ? stamps[stamps.length - 1] + minGap - now : 0;
+        if (perMin && stamps.length >= perMin) wait = Math.max(wait, stamps[0] + 60e3 - now + 25);
+        if (wait > 0) await sleep(wait);
+        if (job.signal && job.signal.aborted) { job.reject(makeAbort()); continue; }
+        stamps.push(Date.now());
+        job.run().then(job.resolve, job.reject);
+      }
+    } finally { busy = false; }
+  }
+  return (run, signal) => new Promise((resolve, reject) => { q.push({ run, resolve, reject, signal }); pump(); });
+}
+// Jolpica: 4 req/s burst, 500/h sustained. OpenF1 free: 3 req/s, 30 req/min.
+const LANES = { jolpica: makeLane(300, 120), openf1: makeLane(450, 24) };
+
+async function fetchJSON(url, ctrl, host) {
+  for (let attempt = 0; ; attempt++) {
+    let timedOut = false;
+    const timer = setTimeout(() => { timedOut = true; ctrl.abort(); }, CFG.TIMEOUT);
+    try {
+      let r;
+      try { r = await fetch(url, { signal: ctrl.signal, credentials: 'omit' }); }
+      catch (err) {
+        const e2 = new Error(timedOut ? 'Request timed out' : 'Network error'); e2.network = true; e2.host = host;
+        markHealth(host, false, e2); throw e2;
+      }
+      if (r.status === 429 && attempt < 2) {
+        clearTimeout(timer);
+        const ra = num(r.headers.get('retry-after'));
+        await sleep(ra != null ? ra * 1000 : 1500 * (attempt + 1));
+        continue;
+      }
+      if (!r.ok) { const e2 = new Error('HTTP ' + r.status); e2.status = r.status; e2.host = host; markHealth(host, false, e2); throw e2; }
+      let j;
+      try { j = await r.json(); } catch (err) { const e2 = new Error('Invalid JSON'); e2.host = host; markHealth(host, false, e2); throw e2; }
+      markHealth(host, true);
+      return j;
+    } finally { clearTimeout(timer); }
+  }
+}
+
+const INFLIGHT = new Map();
+function request(host, url, signal) {
+  let e = INFLIGHT.get(url);
+  if (!e) {
+    const ctrl = new AbortController();
+    e = { ctrl, waiters: 0, started: false };
+    const entry = e;
+    e.promise = LANES[host](() => { entry.started = true; return fetchJSON(url, ctrl, host); }, ctrl.signal);
+    e.promise.then(() => INFLIGHT.delete(url), () => INFLIGHT.delete(url));
+    INFLIGHT.set(url, e);
+  }
+  e.waiters++;
+  if (!signal) return e.promise;
+  const entry = e;
+  return new Promise((res, rej) => {
+    let done = false;
+    const onAbort = () => {
+      if (done) return; done = true; entry.waiters--;
+      if (entry.waiters <= 0 && !entry.started) entry.ctrl.abort();
+      rej(makeAbort());
+    };
+    if (signal.aborted) return onAbort();
+    signal.addEventListener('abort', onAbort, { once: true });
+    entry.promise.then(
+      v => { if (done) return; done = true; signal.removeEventListener('abort', onAbort); res(v); },
+      er => { if (done) return; done = true; signal.removeEventListener('abort', onAbort); rej(er); });
+  });
+}
+
+const jget = (path, signal) => request('jolpica', CFG.JOLPICA + path, signal);
+async function jAll(path, signal) {
+  const sep = path.includes('?') ? '&' : '?';
+  const first = await jget(`${path}${sep}limit=100&offset=0`, signal);
+  if (!first || !first.MRData) throw new Error('Invalid response');
+  const total = int(first.MRData.total) || 0;
+  const pages = [first];
+  for (let off = 100; off < total; off += 100) pages.push(await jget(`${path}${sep}limit=100&offset=${off}`, signal));
+  return pages;
+}
+// Jolpica paginates by result row, so one race can be split across pages -> merge by round.
+function mergeRaces(pages, listKey) {
+  const byRound = new Map();
+  for (const p of pages) for (const r of (p?.MRData?.RaceTable?.Races || [])) {
+    if (!byRound.has(r.round)) byRound.set(r.round, { ...r, [listKey]: [] });
+    if (Array.isArray(r[listKey])) byRound.get(r.round)[listKey].push(...r[listKey]);
+  }
+  return [...byRound.values()];
+}
+
+// OpenF1 free tier returns 401 (without CORS headers) for EVERY request while any F1 session
+// is live (30 min before start -> 30 min after end). Detect that window from the schedule and
+// skip the network entirely, falling back to cached data.
+const OF1 = {
+  until: 0, reason: null,
+  paused() {
+    if (liveWindowNow()) { this.reason = 'live'; return true; }
+    if (Date.now() < this.until) return true;
+    if (this.reason === 'live') this.reason = null;
+    return false;
+  },
+  fail(e) {
+    if (liveWindowNow()) { this.reason = 'live'; return; }
+    this.reason = e && e.status === 429 ? 'rate' : 'error';
+    this.until = Date.now() + 2 * MIN;
+  },
+};
+function of1Get(path, signal) {
+  if (OF1.paused()) return Promise.reject(Object.assign(new Error('OpenF1 paused'), { paused: true }));
+  return request('openf1', CFG.OPENF1 + path, signal).catch(e => { if (!isAbort(e)) OF1.fail(e); throw e; });
+}
+
+/* =====================================================================
+   5. NORMALIZATION
+   ===================================================================== */
+function toUTC(date, time) {
+  if (!date) return null;
+  let t = time || '00:00:00Z';
+  if (!/[zZ]|[+-]\d\d:?\d\d$/.test(t)) t += 'Z';
+  const v = Date.parse(`${date}T${t}`);
+  return Number.isFinite(v) ? v : null;
+}
+function normSchedule(j) {
+  const rt = j?.MRData?.RaceTable;
+  if (!rt || !Array.isArray(rt.Races)) throw new Error('Invalid schedule response');
+  const races = rt.Races.map(r => {
+    const round = int(r.round); if (round == null) return null;
+    const sessions = [];
+    const add = (key, o, name) => {
+      if (!o || !o.date) return;
+      const start = toUTC(o.date, o.time); if (start == null) return;
+      sessions.push({ key, name: name || SESSION_META[key].name, start, end: null, timeKnown: !!o.time, cancelled: false, of1Key: null });
+    };
+    add('FP1', r.FirstPractice); add('FP2', r.SecondPractice); add('FP3', r.ThirdPractice);
+    if (r.SprintQualifying) add('SQ', r.SprintQualifying); else if (r.SprintShootout) add('SQ', r.SprintShootout, 'Sprint Shootout');
+    add('SPR', r.Sprint); add('Q', r.Qualifying); add('R', { date: r.date, time: r.time });
+    sessions.sort((a, b) => a.start - b.start);
+    const c = r.Circuit || {}, loc = c.Location || {};
+    const rs = sessions.find(s => s.key === 'R');
+    return {
+      round, season: int(r.season), name: r.raceName || `Round ${round}`,
+      circuitId: c.circuitId || '', circuitName: c.circuitName || '', locality: loc.locality || '', country: loc.country || '',
+      sessions, raceStart: rs ? rs.start : null, isSprint: sessions.some(s => s.key === 'SPR'), of1: null,
+    };
+  }).filter(Boolean).sort((a, b) => a.round - b.round);
+  return { season: int(rt.season), races };
+}
+function normDriver(d) {
+  if (!d || !d.driverId) return null;
+  return { id: d.driverId, code: d.code || String(d.familyName || '').slice(0, 3).toUpperCase(), number: d.permanentNumber || '', given: d.givenName || '', family: d.familyName || '', nationality: d.nationality || '' };
+}
+function normTeam(c) { return c && c.constructorId ? { id: c.constructorId, name: c.name || c.constructorId } : null; }
+function normDriverStandings(j) {
+  const T = j?.MRData?.StandingsTable; if (!T) throw new Error('Invalid standings response');
+  const L = (T.StandingsLists || [])[0];
+  if (!L) return { round: null, rows: [] };
+  return {
+    round: int(L.round),
+    rows: (L.DriverStandings || []).map(s => ({ pos: int(s.position), posText: s.positionText || '-', points: num(s.points) || 0, wins: int(s.wins) || 0, driver: normDriver(s.Driver), teams: (s.Constructors || []).map(normTeam).filter(Boolean) })).filter(r => r.driver),
+  };
+}
+function normConstructorStandings(j) {
+  const T = j?.MRData?.StandingsTable; if (!T) throw new Error('Invalid standings response');
+  const L = (T.StandingsLists || [])[0];
+  if (!L) return { round: null, rows: [] };
+  return {
+    round: int(L.round),
+    rows: (L.ConstructorStandings || []).map(s => ({ pos: int(s.position), posText: s.positionText || '-', points: num(s.points) || 0, wins: int(s.wins) || 0, team: normTeam(s.Constructor) })).filter(r => r.team),
+  };
+}
+function classify(posText, status) {
+  const s = String(status || '').toLowerCase(); const p = String(posText || '');
+  if (p === 'D' || s.includes('disqualified')) return 'DSQ';
+  if (p === 'E' || s.includes('excluded')) return 'EXC';
+  if (p === 'W' || s.includes('did not start') || s.includes('withdrew')) return 'DNS';
+  if (p === 'F' || s.includes('did not qualify')) return 'DNQ';
+  if (p === 'N' || s.includes('not classified')) return 'NC';
+  if (p === 'R') return 'DNF';
+  if (/^\d+$/.test(p)) return 'FIN';
+  return p || '—';
+}
+function normEntry(x, kind) {
+  const d = normDriver(x.Driver); if (!d) return null;
+  const posText = x.positionText ?? x.position ?? '';
+  return {
+    driverId: d.id, driver: d, number: String(x.number || d.number || ''), team: normTeam(x.Constructor),
+    pos: int(x.position), posText, cls: kind === 'quali' ? 'Q' : classify(posText, x.status),
+    points: num(x.points) || 0, grid: int(x.grid), laps: int(x.laps), status: x.status || '',
+    time: x.Time?.time || '', fl: x.FastestLap?.Time?.time || '', flRank: int(x.FastestLap?.rank),
+    q1: x.Q1 || '', q2: x.Q2 || '', q3: x.Q3 || '',
+  };
+}
+function normResultsPages(pages, listKey, kind) {
+  const out = {};
+  for (const r of mergeRaces(pages, listKey)) {
+    const round = int(r.round); if (round == null) continue;
+    out[round] = (r[listKey] || []).map(x => normEntry(x, kind)).filter(Boolean).sort((a, b) => (a.pos ?? 999) - (b.pos ?? 999));
+  }
+  return out;
+}
+function normPitStops(pages) {
+  const byDriver = {}; let total = 0;
+  for (const r of mergeRaces(pages, 'PitStops')) for (const p of (r.PitStops || [])) {
+    if (!p.driverId) continue; byDriver[p.driverId] = (byDriver[p.driverId] || 0) + 1; total++;
+  }
+  return { byDriver, total };
+}
+function normMeetings(arr) {
+  if (!Array.isArray(arr)) throw new Error('Invalid OpenF1 meetings');
+  return arr.map(m => ({
+    key: m.meeting_key, name: m.meeting_name || '', official: m.meeting_official_name || '',
+    start: Date.parse(m.date_start) || null, end: m.date_end ? (Date.parse(m.date_end) || null) : null,
+    circuitType: m.circuit_type || '', circuitImage: m.circuit_image || '', flag: m.country_flag || '',
+    country: m.country_name || '', location: m.location || '', gmtOffset: m.gmt_offset || '', cancelled: !!m.is_cancelled,
+  })).filter(m => m.key != null);
+}
+function normSessions(arr) {
+  if (!Array.isArray(arr)) throw new Error('Invalid OpenF1 sessions');
+  return arr.map(s => ({
+    key: s.session_key, meeting: s.meeting_key, name: s.session_name || '', mapped: OF1_SESSION_MAP[s.session_name] || null,
+    start: Date.parse(s.date_start) || null, end: Date.parse(s.date_end) || null, cancelled: !!s.is_cancelled,
+  })).filter(s => s.key != null);
+}
+function normOF1Drivers(arr) {
+  if (!Array.isArray(arr)) throw new Error('Invalid OpenF1 drivers');
+  return arr.map(d => ({
+    number: int(d.driver_number), code: d.name_acronym || '', first: d.first_name || '', last: d.last_name || '', team: d.team_name || '',
+    colour: /^#?[0-9a-f]{6}$/i.test(String(d.team_colour || '')) ? '#' + String(d.team_colour).replace('#', '') : '',
+    headshot: /^https:\/\//.test(d.headshot_url || '') ? d.headshot_url : '',
+  }));
+}
+function normSessionResult(arr) {
+  if (!Array.isArray(arr)) throw new Error('Invalid OpenF1 session result');
+  return arr.map(x => ({
+    number: int(x.driver_number), pos: int(x.position), dnf: !!x.dnf, dns: !!x.dns, dsq: !!x.dsq,
+    cls: x.dsq ? 'DSQ' : x.dns ? 'DNS' : x.dnf ? 'DNF' : 'FIN',
+    duration: x.duration ?? null, gap: x.gap_to_leader ?? null, laps: int(x.number_of_laps), points: num(x.points),
+  })).sort((a, b) => (a.pos ?? 999) - (b.pos ?? 999));
+}
+
+/* =====================================================================
+   6. API SERVICE LAYER  (the only place that talks to the network)
+   ===================================================================== */
+const isPastSeason = season => S.currentSeason != null && season < S.currentSeason;
+function weekendHot(now = Date.now()) {
+  const sch = S.scheduleCurrent; if (!sch) return false;
+  return sch.races.some(r => { const f = r.sessions[0]?.start ?? r.raceStart; return f != null && r.raceStart != null && now >= f - HOUR && now <= r.raceStart + 12 * HOUR; });
+}
+const ttlSeasonData = season => isPastSeason(season) ? 30 * DAY : (weekendHot() ? 10 * MIN : 2 * HOUR);
+
+const API = {
+  getCurrentSchedule(o) { return cached('sched:current', 6 * HOUR, async sig => normSchedule(await jget('current.json?limit=100', sig)), o); },
+  getSeasonSchedule(season, o) {
+    if (season === S.currentSeason) return API.getCurrentSchedule(o);
+    return cached(`sched:${season}`, isPastSeason(season) ? 30 * DAY : 6 * HOUR, async sig => normSchedule(await jget(`${season}.json?limit=100`, sig)), o);
+  },
+  getRaceWeekend(round) { return (S.d.schedule?.races || []).find(r => r.round === round) || null; },
+  getDriverStandings(season, o) { return cached(`ds:${season}`, ttlSeasonData(season), async sig => normDriverStandings(await jget(`${season}/driverstandings.json?limit=100`, sig)), o); },
+  getConstructorStandings(season, o) { return cached(`cs:${season}`, ttlSeasonData(season), async sig => normConstructorStandings(await jget(`${season}/constructorstandings.json?limit=100`, sig)), o); },
+  getRaceResults(season, o) { return cached(`res:${season}`, ttlSeasonData(season), async sig => normResultsPages(await jAll(`${season}/results.json`, sig), 'Results', 'race'), o); },
+  getSprintResults(season, o) { return cached(`spr:${season}`, ttlSeasonData(season), async sig => normResultsPages(await jAll(`${season}/sprint.json`, sig), 'SprintResults', 'race'), o); },
+  getQualifyingResults(season, o) { return cached(`q:${season}`, ttlSeasonData(season), async sig => normResultsPages(await jAll(`${season}/qualifying.json`, sig), 'QualifyingResults', 'quali'), o); },
+  getPitStops(season, round, raceEnd, o) {
+    const ttl = raceEnd && Date.now() > raceEnd + 6 * HOUR ? 30 * DAY : 10 * MIN;
+    return cached(`pit:${season}:${round}`, ttl, async sig => normPitStops(await jAll(`${season}/${round}/pitstops.json`, sig)), o);
+  },
+  // Laps of the previous edition at the same circuit (used for upcoming races only).
+  getPrevLaps(season, circuitId, o) {
+    return cached(`prevlaps:${season - 1}:${circuitId}`, 30 * DAY, async sig => {
+      const j = await jget(`${season - 1}/circuits/${enc(circuitId)}/results/1.json`, sig);
+      const r = j?.MRData?.RaceTable?.Races?.[0]; const laps = int(r?.Results?.[0]?.laps);
+      return laps ? { season: season - 1, laps } : null;
+    }, o);
+  },
+  getCircuitInfo(race) {
+    const m = race.of1?.meeting;
+    const winner = (S.d.results?.[race.round] || []).find(e => e.pos === 1);
+    return { type: m?.circuitType || '', gmt: m?.gmtOffset || '', length: CIRCUIT_LENGTH_KM[race.circuitId] || null, laps: winner?.laps || null };
+  },
+  getDriverInfo(driverId) {
+    const row = S.d.ds?.rows.find(x => x.driver.id === driverId);
+    if (row) return row.driver;
+    const rd = derived().driverRounds[driverId]; const any = rd && Object.values(rd)[0];
+    return any ? (any.race || any.sprint).driver : null;
+  },
+  getDriverSeasonResults(driverId) { return derived().driverRounds[driverId] || {}; },
+  getConstructorSeasonResults(teamId) { return derived().teamRounds[teamId] || {}; },
+  // ---- OpenF1 ----
+  getOpenF1Meetings(season, o) { return cached(`of1m:${season}`, isPastSeason(season) ? 30 * DAY : 6 * HOUR, async sig => normMeetings(await of1Get(`meetings?year=${season}`, sig)), o); },
+  getOpenF1Sessions(season, o) { return cached(`of1s:${season}`, isPastSeason(season) ? 30 * DAY : 6 * HOUR, async sig => normSessions(await of1Get(`sessions?year=${season}`, sig)), o); },
+  getOpenF1Meeting(round) { return API.getRaceWeekend(round)?.of1?.meeting || null; },
+  getOpenF1Drivers(sessionKey, o) { return cached(`of1d:${sessionKey}`, 12 * HOUR, async sig => normOF1Drivers(await of1Get(`drivers?session_key=${sessionKey}`, sig)), o); },
+  getOpenF1SessionResult(sessionKey, endTs, o) {
+    const ttl = endTs && Date.now() > endTs + 2 * HOUR ? 30 * DAY : 10 * MIN;
+    return cached(`of1r:${sessionKey}`, ttl, async sig => normSessionResult(await of1Get(`session_result?session_key=${sessionKey}`, sig)), o);
+  },
+  getDriverImage(driver) { return personFor(driver)?.headshot || ''; },
+  getCircuitImage(race) { return race.of1?.circuitImage || IMG.get(race.circuitId) || ''; },
+};
+
+// Remember circuit images per circuit so they survive OpenF1 outages / live-session pauses.
+const IMG = (() => {
+  let m = LS.get('pw:img') || {};
+  return {
+    get: id => m[id] || '',
+    set(id, url) { if (id && url && m[id] !== url) { m[id] = url; LS.set('pw:img', m); } },
+  };
+})();
+
+/* =====================================================================
+   7. APPLICATION STATE
+   ===================================================================== */
+const S = {
+  tz: (() => { const v = LS.get('pw:tz'); return TZ_OPTIONS.some(o => o[0] === v) ? v : 'Asia/Seoul'; })(),
+  lang: (() => { const v = LS.get('pw:lang'); if (v === 'ko' || v === 'en') return v; try { return /^ko\b/i.test(navigator.language || '') ? 'ko' : 'en'; } catch (e) { return 'en'; } })(),
+  season: null, currentSeason: null, seasons: [], scheduleCurrent: null,
+  d: {}, of1Lists: [], people: { byCode: {}, byNum: {} }, teamColors: {},
+  updatedAt: null, coreError: null, refreshing: false, loadTok: 0, lastForce: 0,
+  ui: { openRaces: new Set(), openDR: new Set() },
+};
+const emptyData = () => ({ schedule: null, ds: null, cs: null, results: null, sprint: null, quali: null, meetings: null, sessions: null });
+S.d = emptyData();
+
+function sessionEnd(s) { return s.end || (s.start + (SESSION_META[s.key]?.dur || 60) * MIN); }
+function liveWindowNow(now = Date.now()) {
+  const sch = S.scheduleCurrent; if (!sch) return null;
+  for (const r of sch.races) for (const s of r.sessions) {
+    if (!s.timeKnown || s.cancelled) continue;
+    if (now >= s.start - 30 * MIN && now <= sessionEnd(s) + 30 * MIN) return { race: r, session: s };
+  }
+  return null;
+}
+function sessionName(s) { return L(s.key === 'SQ' && s.of1Name ? s.of1Name : s.name); }
+
+function linkOpenF1(sched, meetings, sessions) {
+  if (!sched) return;
+  const ss = sessions || [], ms = meetings || [];
+  for (const r of sched.races) {
+    r.of1 = null;
+    for (const s of r.sessions) { s.of1Key = null; s.end = null; s.cancelled = false; s.of1Name = null; }
+    let mk = null;
+    const rs = ss.find(s => s.mapped === 'R' && s.start && r.raceStart && Math.abs(s.start - r.raceStart) < 12 * HOUR);
+    if (rs) mk = rs.meeting;
+    else {
+      const first = r.sessions[0]?.start ?? r.raceStart;
+      const m = ms.find(m => !/test/i.test(m.name) && m.start && first && m.start >= first - 2 * DAY && m.start <= (r.raceStart || first) + DAY);
+      if (m) mk = m.key;
+    }
+    if (mk == null) continue;
+    const meeting = ms.find(m => m.key === mk) || null;
+    // Only trust the circuit image/flag when OpenF1 and Jolpica agree on the country
+    // (guards against relocated events keeping the original venue's artwork).
+    const same = meeting && normCountry(meeting.country) === normCountry(r.country);
+    r.of1 = { meeting, circuitImage: same ? meeting.circuitImage : '', flag: same ? meeting.flag : '' };
+    if (same && meeting.circuitImage) IMG.set(r.circuitId, meeting.circuitImage);
+    const mine = ss.filter(s => s.meeting === mk);
+    for (const s of r.sessions) {
+      const o = mine.find(x => x.mapped === s.key); if (!o) continue;
+      s.of1Key = o.key; s.cancelled = o.cancelled; s.of1Name = o.name;
+      if (o.end && o.start && Math.abs(o.start - s.start) < 2 * HOUR && o.end > s.start) s.end = o.end;
+    }
+  }
+}
+function buildPeople() {
+  const byCode = {}, byNum = {};
+  for (const list of S.of1Lists || []) for (const d of list || []) {
+    const prev = (d.code && byCode[d.code]) || {};
+    const merged = { ...prev, ...d, headshot: d.headshot || prev.headshot || '', colour: d.colour || prev.colour || '' };
+    if (d.code) byCode[d.code] = merged;
+    if (d.number != null) byNum[d.number] = merged;
+  }
+  S.people = { byCode, byNum };
+}
+function personFor(driver) {
+  if (!driver) return null;
+  return (driver.code && S.people.byCode[driver.code]) || (driver.number && S.people.byNum[int(driver.number)]) || null;
+}
+function recomputeColors() {
+  const der = derived(); const tc = {};
+  const set = (tid, driver) => { if (!tid || tc[tid]) return; const p = personFor(driver); if (p && p.colour) tc[tid] = p.colour; };
+  for (const x of S.d.ds?.rows || []) set(x.teams[x.teams.length - 1]?.id, x.driver);
+  for (const [id, tid] of Object.entries(der.driverTeamLatest)) set(tid, der.drivers[id]);
+  S.teamColors = tc;
+}
+const teamColor = tid => (tid && S.teamColors[tid]) || '#4a4c52';
+
+// Memoized derived data (recomputed only when results objects change)
+let DER = null, DER_KEY = [];
+function derived() {
+  const key = [S.season, S.d.results, S.d.sprint, S.d.ds, S.d.cs];
+  if (DER && key.every((v, i) => v === DER_KEY[i])) return DER;
+  const res = S.d.results || {}, spr = S.d.sprint || {};
+  const out = { driverPodiums: {}, teamPodiums: {}, driverRounds: {}, teamRounds: {}, numberMap: {}, driverTeamLatest: {}, driverNumber: {}, drivers: {}, teams: {} };
+  for (const x of S.d.cs?.rows || []) out.teams[x.team.id] = x.team;
+  for (const x of S.d.ds?.rows || []) { out.drivers[x.driver.id] = x.driver; for (const t of x.teams) out.teams[t.id] = out.teams[t.id] || t; }
+  const rounds = [...new Set([...Object.keys(res), ...Object.keys(spr)].map(Number))].sort((a, b) => a - b);
+  for (const rd of rounds) {
+    for (const [kind, list] of [['race', res[rd] || []], ['sprint', spr[rd] || []]]) {
+      for (const e of list) {
+        const id = e.driverId, tid = e.team?.id;
+        out.drivers[id] = out.drivers[id] || e.driver;
+        if (e.team) out.teams[tid] = out.teams[tid] || e.team;
+        ((out.driverRounds[id] ||= {})[rd] ||= {})[kind] = e;
+        if (tid) {
+          const T = ((out.teamRounds[tid] ||= {})[rd] ||= { entries: {}, total: 0 });
+          (T.entries[id] ||= { driver: e.driver })[kind] = e;
+          T.total += e.points || 0;
+        }
+        if (kind === 'race' && e.cls === 'FIN' && e.pos && e.pos <= 3) {
+          out.driverPodiums[id] = (out.driverPodiums[id] || 0) + 1;
+          if (tid) out.teamPodiums[tid] = (out.teamPodiums[tid] || 0) + 1;
+        }
+        if (e.number) out.numberMap[e.number] = { driver: e.driver, team: e.team };
+        if (kind === 'race') { if (tid) out.driverTeamLatest[id] = tid; if (e.number) out.driverNumber[id] = e.number; }
+      }
+    }
+  }
+  for (const x of S.d.ds?.rows || []) { const t = x.teams[x.teams.length - 1]; if (t && !out.driverTeamLatest[x.driver.id]) out.driverTeamLatest[x.driver.id] = t.id; }
+  DER = out; DER_KEY = key; return out;
+}
+
+/* =====================================================================
+   8. LOADING / REFRESH
+   ===================================================================== */
+function coreKeys(season) {
+  return [season === S.currentSeason ? 'sched:current' : `sched:${season}`, `ds:${season}`, `cs:${season}`, `res:${season}`, `spr:${season}`];
+}
+function updateUpdatedAt() {
+  const ts = coreKeys(S.season).map(k => cacheRead(k)?.t).filter(Boolean);
+  S.updatedAt = ts.length ? Math.min(...ts) : null;
+}
+function hydrateFromCache(season) {
+  const d = emptyData();
+  d.schedule = season === S.currentSeason ? S.scheduleCurrent : peek(`sched:${season}`);
+  d.ds = peek(`ds:${season}`); d.cs = peek(`cs:${season}`); d.results = peek(`res:${season}`); d.sprint = peek(`spr:${season}`);
+  d.quali = peek(`q:${season}`); d.meetings = peek(`of1m:${season}`); d.sessions = peek(`of1s:${season}`);
+  S.d = d; S.of1Lists = peek(`people:${season}`) || [];
+  linkOpenF1(d.schedule, d.meetings, d.sessions); buildPeople(); recomputeColors(); updateUpdatedAt();
+}
+async function loadSeason(season, force, tok) {
+  const o = { force };
+  const schedule = await API.getSeasonSchedule(season, o);
+  if (tok !== S.loadTok) return;
+  S.d.schedule = schedule;
+  const jobs = [['ds', API.getDriverStandings], ['cs', API.getConstructorStandings], ['results', API.getRaceResults], ['sprint', API.getSprintResults]];
+  if (S.d.quali) jobs.push(['quali', API.getQualifyingResults]);
+  const settled = await Promise.allSettled(jobs.map(([, fn]) => fn(season, o)));
+  if (tok !== S.loadTok) return;
+  settled.forEach((r, i) => { if (r.status === 'fulfilled') S.d[jobs[i][0]] = r.value; });
+  linkOpenF1(S.d.schedule, S.d.meetings, S.d.sessions); recomputeColors(); updateUpdatedAt();
+}
+async function loadOpenF1(season, force, tok) {
+  if (season < CFG.MIN_SEASON) return;
+  const o = { force };
+  const [m, s] = await Promise.allSettled([API.getOpenF1Meetings(season, o), API.getOpenF1Sessions(season, o)]);
+  if (tok !== S.loadTok) return;
+  if (m.status === 'fulfilled') S.d.meetings = m.value;
+  if (s.status === 'fulfilled') S.d.sessions = s.value;
+  linkOpenF1(S.d.schedule, S.d.meetings, S.d.sessions);
+  // Driver headshots/colours: first and latest completed race of the season (2 requests).
+  const now = Date.now();
+  const races = (S.d.sessions || []).filter(x => x.mapped === 'R' && x.start && x.start < now).sort((a, b) => a.start - b.start);
+  let keys = [races[0]?.key, races[races.length - 1]?.key];
+  if (!races.length) { const past = (S.d.sessions || []).filter(x => x.end && x.end < now && x.mapped).sort((a, b) => a.start - b.start); keys = [past[past.length - 1]?.key]; }
+  keys = [...new Set(keys.filter(k => k != null))];
+  const lists = [];
+  for (const k of keys) { try { lists.push(await API.getOpenF1Drivers(k, o)); } catch (e) { if (isAbort(e)) return; } }
+  if (tok !== S.loadTok) return;
+  if (lists.length) { S.of1Lists = lists; cacheWrite(`people:${season}`, lists); }
+  buildPeople(); recomputeColors();
+}
+async function refreshAll(force = false) {
+  if (S.refreshing) return;
+  if (force && Date.now() - S.lastForce < 30e3) force = false;   // protect the free APIs from hammering
+  if (force) S.lastForce = Date.now();
+  S.refreshing = true; queueStatus();
+  const v0 = DATA_VER;
+  let tok = S.loadTok;
+  try {
+    const cur = await API.getCurrentSchedule({ force });
+    const first = S.currentSeason == null;
+    const prevCurrent = S.currentSeason;
+    S.scheduleCurrent = cur; S.currentSeason = cur.season;
+    S.seasons = []; for (let y = cur.season; y >= CFG.MIN_SEASON; y--) S.seasons.push(y);
+    // New season rolled over while the user was on the previous "current" season: follow it.
+    const rolled = !first && prevCurrent !== cur.season && S.season === prevCurrent && !parseRoute().season;
+    if (first || S.season == null || rolled) {
+      const want = parseRoute().season;
+      S.season = want && want >= 1950 && want <= cur.season ? want : cur.season;
+      tok = ++S.loadTok; hydrateFromCache(S.season);
+    }
+    if (S.season === S.currentSeason) S.d.schedule = cur;
+    buildSeasonSelect();
+    await loadSeason(S.season, force, tok);
+    S.coreError = null;
+  } catch (e) {
+    if (!isAbort(e)) { S.coreError = e; console.warn('[pitwall] core load failed', e); }
+  } finally { S.refreshing = false; }
+  if (DATA_VER !== v0 || !S.d.schedule || S.coreError) render({ keepScroll: true });
+  queueStatus();
+  if (S.season != null) {
+    const v1 = DATA_VER;
+    await loadOpenF1(S.season, force, tok).catch(() => {});
+    if (DATA_VER !== v1) render({ keepScroll: true });
+    queueStatus();
+  }
+  scheduleAutoRefresh();
+}
+async function switchSeason(season) {
+  const tok = ++S.loadTok;
+  S.season = season; S.ui.openRaces.clear(); S.ui.openDR.clear();
+  hydrateFromCache(season); buildSeasonSelect(); render();
+  try { await loadSeason(season, false, tok); S.coreError = null; } catch (e) { if (!isAbort(e)) S.coreError = e; }
+  if (tok !== S.loadTok) return;
+  render({ keepScroll: true }); queueStatus();
+  await loadOpenF1(season, false, tok).catch(() => {});
+  if (tok === S.loadTok) { render({ keepScroll: true }); queueStatus(); }
+}
+async function ensureQuali(signal) {
+  if (S.d.quali) return S.d.quali;
+  const season = S.season, tok = S.loadTok;
+  const q = await API.getQualifyingResults(season, { signal });
+  if (tok === S.loadTok) S.d.quali = q;
+  return q;
+}
+let AR_T = null;
+function scheduleAutoRefresh() {
+  clearTimeout(AR_T);
+  AR_T = setTimeout(async () => { if (document.visibilityState === 'visible') await refreshAll(false); else scheduleAutoRefresh(); }, weekendHot() ? 5 * MIN : 30 * MIN);
+}
+
+/* =====================================================================
+   9. TIME / TIMEZONE HELPERS  (everything stored as UTC ms)
+   ===================================================================== */
+function tzId() { if (S.tz === 'local') { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; } catch (e) { return 'UTC'; } } return S.tz; }
+const FMT = new Map();
+function dtf(opts, locale = 'en-GB') {
+  const id = tzId(); const k = id + '|' + locale + '|' + JSON.stringify(opts);
+  let f = FMT.get(k);
+  if (!f) { try { f = new Intl.DateTimeFormat(locale, { timeZone: id, ...opts }); } catch (e) { f = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', ...opts }); } FMT.set(k, f); }
+  return f;
+}
+const tHM = ts => dtf({ hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(ts);
+const isKo = () => S.lang === 'ko';
+const tMD = ts => isKo() ? dtf({ month: 'long', day: 'numeric' }, 'ko-KR').format(ts) : dtf({ month: 'short', day: '2-digit' }, 'en-US').format(ts).toUpperCase();
+const tWD = ts => isKo() ? dtf({ weekday: 'short' }, 'ko-KR').format(ts) : dtf({ weekday: 'short' }, 'en-US').format(ts).toUpperCase();
+const tWDL = ts => isKo() ? dtf({ weekday: 'long' }, 'ko-KR').format(ts) : dtf({ weekday: 'long' }, 'en-US').format(ts).toUpperCase();
+const tDate = ts => isKo() ? `${tMD(ts)} (${tWD(ts)})` : `${tWD(ts)} ${tMD(ts)}`;
+const tDayKey = ts => dtf({ year: 'numeric', month: '2-digit', day: '2-digit' }).format(ts);
+function tzAbbr(ts = Date.now()) {
+  const id = tzId();
+  const fixed = { 'Asia/Seoul': 'KST', 'Asia/Tokyo': 'JST', 'UTC': 'UTC', 'Etc/UTC': 'UTC' };
+  if (fixed[id]) return fixed[id];
+  const loc = { 'Europe/London': 'en-GB', 'Europe/Paris': 'en-GB', 'Europe/Berlin': 'en-GB', 'Australia/Sydney': 'en-AU', 'Australia/Melbourne': 'en-AU' }[id] || 'en-US';
+  try { const p = dtf({ timeZoneName: 'short' }, loc).formatToParts(ts).find(x => x.type === 'timeZoneName'); return p ? p.value : id; } catch (e) { return id; }
+}
+function tzOffset(ts = Date.now(), id = tzId()) {
+  try {
+    const p = new Intl.DateTimeFormat('en-US', { timeZone: id, timeZoneName: 'shortOffset' }).formatToParts(ts).find(x => x.type === 'timeZoneName');
+    const v = p ? p.value : 'GMT'; return v === 'GMT' ? 'UTC+0' : v.replace('GMT', 'UTC');
+  } catch (e) { return ''; }
+}
+function fmtGmtOffset(g) {
+  const m = /^(-)?(\d{1,2}):(\d{2})/.exec(String(g || '')); if (!m) return '';
+  return `UTC${m[1] ? '−' : '+'}${int(m[2])}${m[3] !== '00' ? ':' + m[3] : ''}`;
+}
+function dateRange(r) {
+  const a = r.sessions[0]?.start ?? r.raceStart, b = r.raceStart ?? a;
+  if (a == null) return '—';
+  return tDayKey(a) === tDayKey(b) ? tMD(a) : `${tMD(a)} — ${tMD(b)}`;
+}
+function relText(ts) {
+  let ms = ts - Date.now(); if (ms <= 0) return isKo() ? '곧 시작' : 'now';
+  const d = Math.floor(ms / DAY); ms -= d * DAY; const h = Math.floor(ms / HOUR); ms -= h * HOUR; const m = Math.floor(ms / MIN);
+  if (isKo()) return (d ? `${d}일 ${h}시간` : h ? `${h}시간 ${m}분` : `${m}분`) + ' 후';
+  return 'in ' + (d ? `${d}d ${h}h` : h ? `${h}h ${m}m` : `${m}m`);
+}
+function sessTime(s) {
+  if (!s.timeKnown) return `${tDate(s.start)} · ${L('TBC')}`;
+  return `${tDate(s.start)} · ${tHM(s.start)}${s.end ? '–' + tHM(s.end) : ''} ${tzAbbr(s.start)}`;
+}
+
+/* =====================================================================
+   10. STATUS LOGIC
+   ===================================================================== */
+let NEXT_SESS = null;
+function computeNext(now = Date.now()) {
+  let best = null;
+  for (const r of S.d.schedule?.races || []) for (const s of r.sessions) {
+    if (s.cancelled || !s.timeKnown) continue;
+    if (s.start > now && (!best || s.start < best.start)) best = s;
+  }
+  NEXT_SESS = best;
+}
+function sessionState(s, now = Date.now()) {
+  if (s.cancelled) return 'cancelled';
+  if (!s.timeKnown) return now > s.start + DAY ? 'done' : 'upcoming';
+  if (now >= sessionEnd(s)) return 'done';
+  if (now >= s.start) return 'live';
+  return s === NEXT_SESS ? 'next' : 'upcoming';
+}
+function raceState(r, now = Date.now()) {
+  if (r.of1?.meeting?.cancelled) return 'cancelled';
+  const live = r.sessions.some(s => sessionState(s, now) === 'live');
+  if (live) return 'live';
+  if ((S.d.results?.[r.round] || []).length) return 'completed';
+  const rs = r.sessions.find(s => s.key === 'R');
+  if (rs && sessionState(rs, now) === 'done') return 'completed';
+  const first = r.sessions[0]?.start ?? r.raceStart;
+  if (first != null && now >= first) return 'weekend';
+  return 'upcoming';
+}
+function stateTag(st) {
+  return { completed: `<span class="tag done">${L('✓ COMPLETED')}</span>`, live: '<span class="tag live">LIVE</span>', weekend: `<span class="tag week">${L('RACE WEEK')}</span>`, upcoming: `<span class="tag">${L('UPCOMING')}</span>`, cancelled: `<span class="tag cancel">${L('CANCELLED')}</span>` }[st] || '';
+}
+function sessionTag(st) {
+  return { done: `<span class="tag done">${L('✓ DONE')}</span>`, live: '<span class="tag live">LIVE</span>', next: `<span class="tag next">${L('NEXT')}</span>`, cancelled: `<span class="tag cancel">${L('CANCELLED')}</span>`, upcoming: '' }[st] || '';
+}
+function posLabel(e) { if (!e) return '—'; if (e.cls === 'FIN' || e.cls === 'Q') return e.pos ? `P${e.pos}` : '—'; return e.cls; }
+const rankCls = p => p === 1 ? 'p1' : p === 2 ? 'p2' : p === 3 ? 'p3' : '';
+function posClass(e) { if (!e) return ''; if (e.cls === 'FIN' || e.cls === 'Q') return rankCls(e.pos); return String(e.cls).toLowerCase(); }
+function raceTimeText(e) {
+  if (e.cls !== 'FIN') return statusText(e.status) || e.cls;
+  if (e.time) return e.time;
+  return statusText(e.status) || '';
+}
+
+/* =====================================================================
+   11. UI COMPONENTS
+   ===================================================================== */
+const SIL = '<svg class="sil" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 9a12 12 0 1 1 0 24 12 12 0 0 1 0-24zM9 64c1-15 10.5-24 23-24s22 9 23 24z"/></svg>';
+const TRACK_PH = '<span class="trk" aria-hidden="true"><svg viewBox="0 0 120 80"><path d="M18 56c-5-9 1-20 11-19l19 3c8 1 10-8 18-10l22-6c10-3 16 8 10 16l-8 10c-5 7-14 8-22 6l-33-2c-8-1-13 5-17 2z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/></svg></span>';
+const href = path => `#/${S.season != null && S.season !== S.currentSeason ? S.season + '/' : ''}${path}`;
+const teamShort = t => TEAM_SHORT[t?.id] || String(t?.name || t?.id || '?').replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase();
+
+function photo(driver, size = 'm', tid) {
+  const url = API.getDriverImage(driver);
+  const t = tid ?? derived().driverTeamLatest[driver?.id];
+  // OpenF1 headshots are the 93px "1col" rendition; F1's CDN also serves 2col/3col sizes.
+  // Larger sizes are tried first and fall back to the exact API URL on error.
+  const hi = size === 'l' ? url.replace('/1col/', '/3col/') : size === 'm' ? url.replace('/1col/', '/2col/') : url;
+  return `<span class="ph ph-${size}" style="--tc:${teamColor(t)}">${url ? `<img src="${esc(hi)}"${hi !== url ? ` data-alt="${esc(url)}"` : ''} alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-fb="sil">` : SIL}</span>`;
+}
+function teamBadge(team, size = '') { return `<span class="tb${size ? ' tb-' + size : ''}" style="--tc:${teamColor(team?.id)}" title="${esc(team?.name || '')}">${esc(teamShort(team))}</span>`; }
+function teamTxt(team, cls = '') { return team ? `<span class="teamtxt ${cls}" style="--tc:${teamColor(team.id)}">${esc(team.name)}</span>` : ''; }
+function flagHTML(r) {
+  const iso = COUNTRY_ISO[normCountry(r.country)];
+  const a = r.of1?.flag || '', b = iso ? `https://flagcdn.com/w80/${iso}.png` : '';
+  const txt = esc(String(r.country || '').slice(0, 3).toUpperCase());
+  const src = a || b;
+  if (!src) return `<span class="flag flag-t">${txt}</span>`;
+  return `<img class="flag" src="${esc(src)}"${a && b ? ` data-alt="${esc(b)}"` : ''} data-fb="flag" data-txt="${txt}" alt="${esc(r.country)}" loading="lazy" decoding="async">`;
+}
+function circuitImg(r) {
+  const u = API.getCircuitImage(r);
+  return u ? `<img src="${esc(u)}" alt="${esc(r.circuitName)} layout" loading="lazy" decoding="async" data-fb="track">` : TRACK_PH;
+}
+function countdownHTML(ts) { return `<div class="cd" data-cd="${ts}">${cdInner(ts)}</div>`; }
+function cdInner(ts) {
+  let s = Math.max(0, Math.floor((ts - Date.now()) / 1000));
+  const p = { d: Math.floor(s / 86400), h: Math.floor(s % 86400 / 3600), m: Math.floor(s % 3600 / 60), s: s % 60 };
+  return [['d', 'DAYS'], ['h', 'HRS'], ['m', 'MIN'], ['s', 'SEC']].map(([k, l]) => `<div class="cd-u"><b>${pad(p[k])}</b><span>${L(l)}</span></div>`).join('');
+}
+const skel = (n, cls = 'sk-block') => Array.from({ length: n }, () => `<div class="sk ${cls}"></div>`).join('');
+const emptyCard = msg => `<div class="card empty">${esc(msg)}</div>`;
+const pageHead = (kicker, title, meta = '') => `<div class="pagehead"><div><div class="kicker">${kicker}</div><h1 class="h1">${title}</h1></div>${meta ? `<div class="phmeta">${meta}</div>` : ''}</div>`;
+const fact = (k, v) => `<div class="fact"><dt>${k}</dt><dd>${v}</dd></div>`;
+const backLink = (path, label) => `<a class="back" href="${href(path)}">← ${label}</a>`;
+function errText(e) {
+  if (!e) return L('Unavailable.');
+  if (e.paused) return OF1.reason === 'live' ? L('msg.of1LiveCached') : L('msg.of1Down');
+  if (e.status === 429) return L('msg.rate');
+  if (e.status) return L('msg.http', e.status);
+  if (e.network) return L('msg.net');
+  return L('Unable to load latest data.');
+}
+function sectionError(label) {
+  if (S.refreshing) return `<div style="padding:12px 16px">${skel(3, 'sk-line')}</div>`;
+  return `<div class="note">${esc(L('Unable to load {0}.', L(label)))} ${S.coreError || HEALTH.jolpica.ok === false ? L('msg.noCache') : ''} <button class="btn-sm" data-action="refresh">${L('Retry')}</button></div>`;
+}
+
+/* =====================================================================
+   12. VIEWS
+   ===================================================================== */
+// ---------- HOME ----------
+function homeHTML() {
+  const sch = S.d.schedule, races = sch.races, now = Date.now();
+  if (!races.length) return pageHead(L('SEASON OVERVIEW'), `F1 ${sch.season}`) + emptyCard(L('The calendar for this season has not been published yet.'));
+  const next = races.find(r => ['live', 'weekend', 'upcoming'].includes(raceState(r, now))) || null;
+  const lastDone = [...races].reverse().find(r => (S.d.results?.[r.round] || []).length) || null;
+  const curRound = next ? next.round : races[races.length - 1].round;
+  const head = `<div class="pagehead"><div><div class="kicker">${L('SEASON OVERVIEW')}</div><h1 class="h1">F1 ${sch.season}</h1></div><div class="roundbox"><span class="lbl">${L('CURRENT ROUND')}</span><b class="mono">${pad(curRound)}<span class="dim"> / ${pad(races.length)}</span></b></div></div>`;
+  const cards = `<div class="grid3">
+    ${homeCard(L('DRIVERS · TOP 3'), href('drivers'), top3Drivers())}
+    ${homeCard(L('CONSTRUCTORS · TOP 3'), href('constructors'), top3Teams())}
+    ${homeCard(lastDone ? `${L('LAST RACE')} · <span class="up">${esc(gpShort(lastDone))}</span>` : L('LAST RACE RESULT'), lastDone ? href(`results/${lastDone.round}/R`) : '', lastRaceHTML(lastDone))}
+  </div>`;
+  const wk = next ? `<section class="card mt16"><div class="ch"><h3>${L('NEXT RACE')} · <span class="up">${esc(gpShort(next))}</span> · ${L('WEEKEND SCHEDULE')} (${esc(tzAbbr())})</h3><a class="ch-link" href="${href('schedule/' + next.round)}">${L('SCHEDULE →')}</a></div><div class="cb">${weekendSessionsHTML(next)}</div></section>` : '';
+  return head + (next ? heroHTML(next, now) : seasonDoneHTML()) + cards + wk;
+}
+function homeCard(title, link, body) { return `<section class="card"><div class="ch"><h3>${title}</h3>${link ? `<a class="ch-link" href="${link}">${L('ALL →')}</a>` : ''}</div>${body}</section>`; }
+function heroHTML(r, now) {
+  const st = raceState(r, now); const rs = r.sessions.find(s => s.key === 'R');
+  const liveS = r.sessions.find(s => sessionState(s, now) === 'live');
+  const nextS = r.sessions.find(s => !s.cancelled && s.timeKnown && s.start > now);
+  const kick = st === 'live' ? `<span class="tag live">LIVE</span> ${L('RACE WEEKEND')}` : st === 'weekend' ? `<span class="tag week">${L('THIS WEEKEND')}</span>` : L('NEXT RACE');
+  let nextLine = '';
+  if (liveS) nextLine = `<div class="hero-next"><span class="tag live">LIVE</span><b class="up">${esc(sessionName(liveS))}</b><span class="muted">${L('msg.heroLive')}</span></div>`;
+  else if (nextS && nextS !== rs) nextLine = `<div class="hero-next"><span class="lbl">${L('NEXT SESSION')}</span><b class="up">${esc(sessionName(nextS))}</b><span class="mono">${esc(sessTime(nextS))}</span><span class="muted" data-rel="${nextS.start}">${relText(nextS.start)}</span></div>`;
+  return `<article class="hero card${st === 'live' || st === 'weekend' ? ' hot' : ''}">
+    <div class="hero-img">${circuitImg(r)}</div>
+    <div class="hero-body">
+      <div class="kicker red">${kick} <span class="dim">· ${L('ROUND')} ${pad(r.round)}</span></div>
+      <h2 class="hero-title">${esc(gpName(r))}</h2>
+      <div class="hero-sub">${flagHTML(r)}<span>${esc(r.circuitName)}</span><span class="dim">· ${esc(placeName(r))}</span></div>
+      <div class="hero-facts">
+        <div><span class="lbl">${L('DATE')}</span><b>${rs ? tDate(rs.start) : '—'}</b></div>
+        <div><span class="lbl">${L('RACE TIME')}</span><b>${rs && rs.timeKnown ? tHM(rs.start) : L('TBC')} <small>${rs ? esc(tzAbbr(rs.start)) : ''}</small></b></div>
+        <div><span class="lbl">${L('WEEKEND')}</span><b>${dateRange(r)}</b></div>
+      </div>
+      ${rs && rs.timeKnown && rs.start > now ? `<div class="lbl">${L('COUNTDOWN TO RACE START')}</div>${countdownHTML(rs.start)}` : ''}
+      ${nextLine}
+      <div class="hero-actions"><a class="btn" href="${href('schedule/' + r.round)}">${L('FULL WEEKEND SCHEDULE →')}</a>${r.isSprint ? `<span class="tag">${L('SPRINT WEEKEND')}</span>` : ''}</div>
+    </div></article>`;
+}
+function seasonDoneHTML() {
+  const c = S.d.ds?.rows?.[0];
+  return `<article class="card hero" style="grid-template-columns:1fr"><div class="hero-body"><div class="kicker red">${L('SEASON COMPLETE')}</div><h2 class="hero-title">${esc(L('{0} World Championship', S.d.schedule.season))}</h2>${c ? `<a class="champ" href="${href('drivers/' + enc(c.driver.id))}">${photo(c.driver, 'm')}<span><span class="lbl">${L("DRIVERS' CHAMPION")}</span><b class="up">${esc(c.driver.given)} ${esc(c.driver.family)}</b><span class="mono">${fmtPts(c.points)} ${L('PTS')}</span></span></a>` : ''}</div></article>`;
+}
+function top3Drivers() {
+  if (!S.d.ds) return sectionError('driver standings');
+  const rows = S.d.ds.rows.slice(0, 3);
+  if (!rows.length) return `<div class="empty">${L('Standings will appear after the first race.')}</div>`;
+  return rows.map(x => { const t = x.teams[x.teams.length - 1]; return `<a class="mini" href="${href('drivers/' + enc(x.driver.id))}"><span class="mini-pos rk ${rankCls(x.pos)}">${pad(x.pos ?? '-')}</span>${photo(x.driver, 's', t?.id)}<span class="mini-name"><b class="up">${esc(x.driver.family)}</b>${teamTxt(t)}</span><span class="mini-pts">${fmtPts(x.points)}<small>${L('PTS')}</small></span></a>`; }).join('');
+}
+function top3Teams() {
+  if (!S.d.cs) return sectionError('constructor standings');
+  const rows = S.d.cs.rows.slice(0, 3);
+  if (!rows.length) return `<div class="empty">${L('Standings will appear after the first race.')}</div>`;
+  return rows.map(x => `<a class="mini" href="${href('constructors/' + enc(x.team.id))}"><span class="mini-pos rk ${rankCls(x.pos)}">${pad(x.pos ?? '-')}</span>${teamBadge(x.team)}<span class="mini-name"><b class="up">${esc(x.team.name)}</b><span class="dim mono" style="font-size:12px">${nWins(x.wins)}</span></span><span class="mini-pts">${fmtPts(x.points)}<small>${L('PTS')}</small></span></a>`).join('');
+}
+function lastRaceHTML(r) {
+  if (!S.d.results) return sectionError('race results');
+  if (!r) return `<div class="empty">${L('No race results yet this season.')}</div>`;
+  const list = S.d.results[r.round] || [];
+  const fl = list.find(e => e.flRank === 1);
+  return list.slice(0, 3).map(e => `<a class="mini" href="${href(`drivers/${enc(e.driverId)}/${r.round}`)}"><span class="mini-pos rk ${posClass(e)}">${posLabel(e)}</span>${photo(e.driver, 's', e.team?.id)}<span class="mini-name"><b class="up">${esc(e.driver.family)}</b>${teamTxt(e.team)}</span><span class="mini-pts">${esc(raceTimeText(e))}<small>${e.points ? '+' + fmtPts(e.points) + ' ' + L('PTS') : ''}</small></span></a>`).join('')
+    + (fl ? `<div class="mini-foot"><span class="lbl">${L('FASTEST LAP')}</span><b class="fl">${esc(fl.driver.code)}</b><span class="mono fl-time">${esc(fl.fl)}</span></div>` : '');
+}
+
+// ---------- SCHEDULE ----------
+function scheduleHTML() {
+  const races = S.d.schedule.races, now = Date.now();
+  if (!races.length) return pageHead(L('{0} CALENDAR', S.season), L('Schedule')) + emptyCard(L('The calendar for this season has not been published yet.'));
+  const c = { completed: 0, live: 0, weekend: 0, upcoming: 0, cancelled: 0 };
+  races.forEach(r => { c[raceState(r, now)]++; });
+  const meta = `${L('{0} COMPLETED', c.completed)} · ${L('{0} REMAINING', c.live + c.weekend + c.upcoming)}${c.cancelled ? ` · ${L('{0} CANCELLED', c.cancelled)}` : ''}<br><span class="dim">${esc(L('TIMES IN {0}', `${tzAbbr()} (${tzOffset()})`))}</span>`;
+  return pageHead(L('{0} CALENDAR · {1} ROUNDS', S.season, races.length), L('Schedule'), meta) + `<div class="races">${races.map(r => raceCardHTML(r, now)).join('')}</div>`;
+}
+function raceCardHTML(r, now) {
+  const st = raceState(r, now), open = S.ui.openRaces.has(r.round);
+  const rs = r.sessions.find(s => s.key === 'R');
+  const winner = (S.d.results?.[r.round] || []).find(e => e.pos === 1);
+  const liveS = r.sessions.find(s => sessionState(s, now) === 'live');
+  return `<article class="race st-${st}${open ? ' open' : ''}" id="race-${r.round}">
+    <button class="race-head" type="button" data-toggle="race" data-round="${r.round}" aria-expanded="${open}">
+      <span class="race-img">${circuitImg(r)}</span>
+      <span class="race-main"><span class="race-round">${L('ROUND')} ${pad(r.round)}${r.isSprint ? ` <span class="tag">${L('SPRINT')}</span>` : ''}</span><span class="race-name">${esc(gpName(r))}</span><span class="race-sub">${flagHTML(r)}<span>${esc(countryName(r.country))}</span><span class="dim">·</span><span>${esc(r.circuitName)}</span></span></span>
+      <span class="race-when"><span class="race-dates">${dateRange(r)}</span><span class="race-time"><span class="lbl">${L('RACE')}</span>${rs ? (rs.timeKnown ? `${tWD(rs.start)} ${tHM(rs.start)} ${esc(tzAbbr(rs.start))}` : L('TBC')) : '—'}</span></span>
+      <span class="race-status">${stateTag(st)}${liveS ? `<span class="winner up">${esc(sessionName(liveS))}</span>` : ''}${winner ? `<span class="winner">${L('WINNER')} ${esc(winner.driver.code)}</span>` : (st === 'completed' ? `<span class="winner">${L('RESULTS PENDING')}</span>` : '')}</span>
+      <span class="chev" aria-hidden="true"></span>
+    </button>
+    <div class="race-body"${open ? '' : ' hidden'}>${open ? raceBodyHTML(r) : ''}</div>
+  </article>`;
+}
+function raceBodyHTML(r) {
+  const res = S.d.results?.[r.round] || [];
+  const info = API.getCircuitInfo(r);
+  const m = r.of1?.meeting;
+  return `<div class="rb-grid">
+    <div class="rb-main">
+      <div class="rb-title"><h3>${esc(gpName(r))}</h3><div class="muted">${esc(r.circuitName)} · ${esc(placeName(r))} · ${dateRange(r)}</div>${m?.official ? `<div class="official">${esc(m.official)}</div>` : ''}</div>
+      <div class="sechead" style="margin-top:18px"><h4 class="sec">${L('Weekend schedule')} · ${esc(tzAbbr())}</h4>${r.isSprint ? `<span class="tag">${L('SPRINT FORMAT')}</span>` : ''}</div>
+      ${weekendSessionsHTML(r)}
+    </div>
+    <aside class="rb-side"><div class="cpanel">
+      <div class="cp-img">${circuitImg(r)}</div>
+      <div class="cp-name">${flagHTML(r)}<b>${esc(r.circuitName)}</b></div>
+      <dl class="facts">
+        ${fact(L('CITY'), esc(placeName(r)))}
+        ${fact(L('CIRCUIT TYPE'), esc(info.type ? L(info.type) : '—'))}
+        ${fact(L('LENGTH'), info.length ? `${info.length.toFixed(3)} km<sup class="ref" title="${esc(L('Built-in reference value — not provided by the APIs'))}">REF</sup>` : '—')}
+        ${fact(L('TRACK TIME'), info.gmt ? esc(fmtGmtOffset(info.gmt)) : '—')}
+        <div class="facts-ld" data-ld="${r.round}">${ldHTML(r, info.laps, info.laps ? L('THIS RACE') : null, !info.laps)}</div>
+      </dl>
+    </div></aside>
+  </div>
+  <div class="rb-drivers">${res.length ? classificationMiniHTML(r, res) : entryListHTML(r)}</div>`;
+}
+function ldHTML(r, laps, src, loading) {
+  const len = CIRCUIT_LENGTH_KM[r.circuitId];
+  if (loading) return fact(L('LAPS'), '<span class="dim">…</span>') + fact(L('RACE DISTANCE'), '<span class="dim">…</span>');
+  const dist = len && laps ? `${(len * laps).toFixed(3)} km<sup class="ref" title="${esc(L('Length (reference) × laps (API)'))}">REF</sup>` : '—';
+  return fact(L('LAPS'), laps ? `${laps}${src ? ` <small>${esc(src)}</small>` : ''}` : '—') + fact(L('RACE DISTANCE'), dist);
+}
+function weekendSessionsHTML(r) {
+  const now = Date.now(); const groups = []; let cur = null;
+  for (const s of r.sessions) { const k = tDayKey(s.start); if (!cur || cur.k !== k) { cur = { k, ts: s.start, items: [] }; groups.push(cur); } cur.items.push(s); }
+  return `<div class="wk">${groups.map(g => `<div class="wk-day"><div class="wk-dh">${tWDL(g.ts)}<span>${tMD(g.ts)}</span></div>${g.items.map(s => sessionRowHTML(r, s, now)).join('')}</div>`).join('')}</div>`;
+}
+function sessionRowHTML(r, s, now) {
+  const st = sessionState(s, now);
+  const time = s.timeKnown ? `${tHM(s.start)}${s.end ? ` — ${tHM(s.end)}` : ''} <small>${esc(tzAbbr(s.start))}</small>` : L('TBC');
+  const link = st === 'done' || st === 'live' ? `<a class="srow-link" href="${href(`results/${r.round}/${s.key}`)}">${L('RESULTS →')}</a>` : '<span></span>';
+  return `<div class="srow ss-${st}"><span class="srow-name">${esc(sessionName(s))}</span><span class="srow-time">${time}</span><span class="srow-st">${sessionTag(st)}</span>${link}</div>`;
+}
+function classificationMiniHTML(r, res) {
+  return `<div class="sechead"><h4 class="sec">${L('Race classification · select a driver')}</h4><a class="ch-link" href="${href(`results/${r.round}/R`)}">${L('FULL RESULTS →')}</a></div>
+  <div class="clsgrid">${res.map(e => `<a class="cl" href="${href(`drivers/${enc(e.driverId)}/${r.round}`)}"><span class="pos ${posClass(e)}">${posLabel(e)}</span>${photo(e.driver, 'xs', e.team?.id)}<span class="cl-n${e.flRank === 1 ? ' fl' : ''}"><b>${esc(e.driver.code)}</b> <span class="muted hs">${esc(e.driver.given)} ${esc(e.driver.family)}</span>${e.flRank === 1 && e.fl ? ` <small class="fl-time n">FL ${esc(e.fl)}</small>` : ''}</span><span class="cl-t n">${esc(raceTimeText(e))}</span><span class="cl-p n">${e.points ? '+' + fmtPts(e.points) : ''}</span></a>`).join('')}</div>`;
+}
+function entryListHTML(r) {
+  const rows = S.d.ds?.rows || [];
+  if (!rows.length) return '';
+  const started = r.sessions.some(s => sessionState(s) === 'done' || sessionState(s) === 'live');
+  return `<div class="sechead"><h4 class="sec">${L('Drivers · championship order')}</h4><span class="dim" style="font-size:12px">${started ? L('Select a driver for this weekend’s sessions') : L('Select a driver for their season profile')}</span></div>
+  <div class="dchips">${rows.map(x => `<a class="dchip" href="${href(`drivers/${enc(x.driver.id)}${started ? '/' + r.round : ''}`)}">${photo(x.driver, 'xs', x.teams[x.teams.length - 1]?.id)}<b>${esc(x.driver.code)}</b><span class="muted">${esc(x.driver.family)}</span></a>`).join('')}</div>`;
+}
+async function fillRaceBody(r, body, signal) {
+  const el = body.querySelector(`[data-ld="${r.round}"]`); if (!el) return;
+  const info = API.getCircuitInfo(r);
+  if (info.laps) return;
+  try {
+    const prev = r.circuitId ? await API.getPrevLaps(S.season, r.circuitId, { signal }) : null;
+    if (el.isConnected) el.innerHTML = ldHTML(r, prev ? prev.laps : null, prev ? L('{0} RACE', prev.season) : null);
+  } catch (e) { if (!isAbort(e) && el.isConnected) el.innerHTML = ldHTML(r, null, null); }
+}
+
+// ---------- DRIVERS ----------
+function driversHTML() {
+  const ds = S.d.ds;
+  if (!ds) return pageHead(L('DRIVER CHAMPIONSHIP'), L('Drivers')) + sectionError('driver standings');
+  if (!ds.rows.length) return pageHead(L('DRIVER CHAMPIONSHIP'), L('Drivers')) + emptyCard(L('The championship has not started yet.'));
+  const der = derived();
+  const head = `<div class="thead g-d"><span>${L('POS')}</span><span></span><span>${L('DRIVER')}</span><span class="t-team">${L('TEAM')}</span><span style="text-align:right">${L('POINTS')}</span><span style="text-align:right">${L('WINS')}</span><span style="text-align:right">${L('PODIUMS')}</span></div>`;
+  return pageHead(`${L('DRIVER CHAMPIONSHIP')} · ${S.season}${ds.round ? ` · ${L('AFTER ROUND {0}', ds.round)}` : ''}`, L('Drivers')) + head + `<div class="list">${ds.rows.map(x => {
+    const d = x.driver, t = x.teams[x.teams.length - 1], tid = der.driverTeamLatest[d.id] || t?.id;
+    const team = der.teams[tid] || t;
+    const pod = der.driverPodiums[d.id] || 0;
+    return `<a class="drow g-d" href="${href('drivers/' + enc(d.id))}" style="--tc:${teamColor(tid)}">
+      <span class="c-pos rk ${rankCls(x.pos)}">${x.pos ? pad(x.pos) : esc(x.posText)}</span>${photo(d, 'm', tid)}
+      <span class="c-drv"><span class="dnum">#${esc(der.driverNumber[d.id] || d.number || '—')} · ${esc(d.code)}</span><span class="dname"><span class="given">${esc(d.given)}</span> <b>${esc(d.family)}</b></span><span class="m-only">${teamTxt(team)}</span><span class="m-only drv-mini">${nWins(x.wins)} · ${nPods(pod)}</span></span>
+      <span class="c-team">${teamTxt(team)}</span>
+      <span class="c-pts"><b>${fmtPts(x.points)}</b><small>${L('PTS')}</small></span>
+      <span class="c-stat"><b>${x.wins}</b><small>${L('WINS')}</small></span>
+      <span class="c-stat"><b>${pod}</b><small>${L('PODIUMS')}</small></span>
+    </a>`; }).join('')}</div>`;
+}
+function driverDetailHTML(r) {
+  const id = r.a; const der = derived();
+  const row = S.d.ds?.rows.find(x => x.driver.id === id);
+  const driver = API.getDriverInfo(id);
+  if (!driver) return backLink('drivers', L('DRIVER CHAMPIONSHIP')) + emptyCard(S.d.results ? L('No entries for this driver in the {0} season.', S.season) : L('Driver data is not available yet.'));
+  const tid = der.driverTeamLatest[id] || row?.teams[row.teams.length - 1]?.id;
+  const team = der.teams[tid] || row?.teams[row.teams.length - 1] || null;
+  const stats = [[L('POSITION'), row?.pos ? `P${row.pos}` : '—'], [L('POINTS'), row ? fmtPts(row.points) : '—'], [L('WINS'), row ? row.wins : '—'], [L('PODIUMS'), der.driverPodiums[id] || 0]];
+  const now = Date.now(); const rounds = API.getDriverSeasonResults(id);
+  return `${backLink('drivers', L('DRIVER CHAMPIONSHIP'))}
+    <section class="dhead card" style="--tc:${teamColor(tid)}">
+      ${photo(driver, 'l', tid)}
+      <div class="dh-main">
+        <div class="kicker"><span class="mono">#${esc(der.driverNumber[id] || driver.number || '—')}</span>${teamTxt(team)}</div>
+        <h1 class="dh-name"><span class="given">${esc(driver.given)}</span>${esc(driver.family)}</h1>
+        <div class="muted" style="font-size:13px">${esc(driver.nationality)}${driver.code ? ` · ${esc(driver.code)}` : ''} · ${esc(L('{0} SEASON', S.season))}</div>
+        <div class="stats">${stats.map(([k, v]) => `<div class="stat"><span class="lbl">${k}</span><b>${v}</b></div>`).join('')}</div>
+      </div>
+    </section>
+    <div class="sechead"><h2 class="h2">${L('Season results')}</h2><span class="dim" style="font-size:12.5px">${L('Select a race for FP / qualifying / race results')}</span></div>
+    <div>${S.d.schedule.races.map(race => driverRoundRow(id, race, rounds[race.round], now)).join('')}</div>`;
+}
+function driverRoundRow(id, race, rd, now) {
+  const started = race.sessions.some(s => { const st = sessionState(s, now); return st === 'done' || st === 'live'; });
+  const open = started && S.ui.openDR.has(`${id}:${race.round}`);
+  const e = rd?.race, sp = rd?.sprint;
+  const st = raceState(race, now);
+  let right;
+  if (e) right = `<span class="pos ${posClass(e)}">${posLabel(e)}</span><span class="rr-pts"><b>${fmtPts(e.points)}</b> ${L('PTS')}${sp && sp.points ? `<small>+${fmtPts(sp.points)} ${L('SPRINT')}</small>` : ''}</span>`;
+  else if (started) right = `<span class="pos dim">—</span><span class="rr-pts dim">${st === 'completed' ? L('NO RACE RESULT') : st === 'cancelled' ? L('CANCELLED') : L('WEEKEND UNDERWAY')}</span>`;
+  else right = `<span class="pos dim"></span><span class="rr-pts dim">${st === 'cancelled' ? L('CANCELLED') : race.raceStart ? tMD(race.raceStart) : ''}</span>`;
+  return `<div class="rr${started ? '' : ' future'}${open ? ' open' : ''}" id="dr-${race.round}">
+    <button class="rr-head" type="button" ${started ? `data-toggle="dr" data-driver="${esc(id)}" data-round="${race.round}" aria-expanded="${open}"` : 'disabled'}>
+      <span class="rr-round">R${pad(race.round)}</span>${flagHTML(race)}
+      <span class="rr-name"><b class="up">${esc(gpShort(race))}</b>${sp ? `<small class="mono">${L('SPRINT')} ${posLabel(sp)}</small>` : ''}</span>
+      ${right}<span class="chev" aria-hidden="true"></span>
+    </button>
+    <div class="rr-body"${open ? '' : ' hidden'}>${open ? `<div class="sess-grid">${skel(3)}</div>` : ''}</div>
+  </div>`;
+}
+
+// ----- session classification (Jolpica first, OpenF1 second) -----
+function numberMapForRound(round) {
+  const der = derived(); const m = {};
+  const add = e => { if (e && e.number && e.driver && !m[e.number]) m[e.number] = { driver: e.driver, team: e.team }; };
+  (S.d.results?.[round] || []).forEach(add); (S.d.sprint?.[round] || []).forEach(add); (S.d.quali?.[round] || []).forEach(add);
+  return { round: m, season: der.numberMap };
+}
+function mapOF1Rows(rows, round) {
+  const nm = numberMapForRound(round);
+  const byCode = {}; for (const x of S.d.ds?.rows || []) byCode[x.driver.code] = { driver: x.driver, team: x.teams[x.teams.length - 1] };
+  return rows.map(x => {
+    const k = String(x.number);
+    let hit = nm.round[k];
+    if (!hit) { const p = S.people.byNum[x.number]; if (p && byCode[p.code]) hit = byCode[p.code]; }
+    if (!hit) hit = nm.season[k];
+    if (!hit) {
+      const p = S.people.byNum[x.number];
+      hit = { driver: { id: null, code: p?.code || '#' + k, number: k, given: p?.first || '', family: p?.last || `Car ${k}` }, team: p ? { id: null, name: p.team } : null };
+    }
+    return { ...x, driver: hit.driver, driverId: hit.driver.id, team: hit.team };
+  });
+}
+function of1Why(s) {
+  if (S.season < CFG.MIN_SEASON) return L('msg.of1Season');
+  if (s.of1Key != null) return null;
+  if (OF1.paused() && OF1.reason === 'live') return L('msg.of1Live');
+  if (!S.d.sessions) return L('msg.of1Failed');
+  return L('msg.of1NoData');
+}
+async function getClassification(race, s, signal) {
+  const round = race.round;
+  if (s.key === 'R' && S.d.results?.[round]?.length) return { source: 'JOLPICA F1 API', kind: 'race', rows: S.d.results[round] };
+  if (s.key === 'SPR' && S.d.sprint?.[round]?.length) return { source: 'JOLPICA F1 API', kind: 'race', rows: S.d.sprint[round] };
+  if (s.key === 'Q') {
+    try { const q = await ensureQuali(signal); if (q?.[round]?.length) return { source: 'JOLPICA F1 API', kind: 'quali', rows: q[round] }; }
+    catch (e) { if (isAbort(e)) throw e; }
+  }
+  const why = of1Why(s);
+  if (why) return { unavailable: (['R', 'SPR', 'Q'].includes(s.key) ? L('msg.jolNotYet') : '') + why };
+  const raw = await API.getOpenF1SessionResult(s.of1Key, sessionEnd(s), { signal });
+  if (!raw.length) return { unavailable: L('msg.noCls') };
+  const kind = (s.key === 'Q' || s.key === 'SQ') ? 'of1quali' : (s.key === 'R' || s.key === 'SPR') ? 'of1race' : 'practice';
+  return { source: 'OPENF1 · HISTORICAL', kind, rows: mapOF1Rows(raw, round) };
+}
+const QR_MEMO = new WeakMap();
+function qualiRanks(rows) {
+  let m = QR_MEMO.get(rows); if (m) return m;
+  m = { q1: {}, q2: {}, q3: {} };
+  for (const seg of ['q1', 'q2', 'q3']) rows.map(e => [e.driverId, lapMs(e[seg])]).filter(x => x[1] != null).sort((a, b) => a[1] - b[1]).forEach(([id], i) => { m[seg][id] = i + 1; });
+  QR_MEMO.set(rows, m); return m;
+}
+function segMins(rows) {
+  return [0, 1, 2].map(i => { const v = rows.map(x => num(Array.isArray(x.duration) ? x.duration[i] : (i === 0 ? x.duration : null))).filter(x => x != null); return v.length ? Math.min(...v) : null; });
+}
+const kvHTML = items => `<div class="kv">${items.map(([k, v]) => `<div><span class="lbl">${k}</span><b>${v}</b></div>`).join('')}</div>`;
+function sessCard(race, s, st, inner, opts = {}) {
+  const link = st === 'done' ? `<a href="${href(`results/${race.round}/${s.key}`)}">${L('FULL CLASSIFICATION →')}</a>` : '';
+  return `<div class="sess${opts.wide ? ' wide' : ''}${opts.pending ? ' pending' : ''}">
+    <div class="sess-h"><span class="sess-name">${esc(sessionName(s))}</span><span class="sess-time">${esc(sessTime(s))}</span></div>
+    ${inner}
+    <div class="sess-f"><span class="src">${opts.src ? L('SOURCE') + ' · ' + esc(opts.src) : ''}</span>${link}</div>
+  </div>`;
+}
+function sessionBody(kind, e, c, race, s, pits) {
+  const big = `<div class="sess-top"><span class="sess-big pos ${posClass(e)}">${posLabel(e)}</span></div>`;
+  if (kind === 'practice') return big + kvHTML([[L('BEST LAP'), e.pos === 1 ? `<span class="fl-time">${fmtSec(e.duration)}</span>` : fmtSec(e.duration)], [L('GAP'), fmtGap(e.gap)], [L('LAPS'), e.laps ?? '—']]);
+  if (kind === 'of1quali') {
+    const d = Array.isArray(e.duration) ? e.duration : [e.duration]; const p = s.key === 'SQ' ? 'SQ' : 'Q';
+    const mins = segMins(c.rows); const t = i => num(d[i]) != null && num(d[i]) === mins[i] ? `<span class="fl-time">${fmtSec(d[i])}</span>` : fmtSec(d[i]);
+    return big + kvHTML([[p + '1', t(0)], [p + '2', t(1)], [p + '3', t(2)], [L('LAPS'), e.laps ?? '—']]);
+  }
+  if (kind === 'quali') {
+    const rk = qualiRanks(c.rows); const re = (S.d.results?.[race.round] || []).find(x => x.driverId === e.driverId);
+    const seg = k => e[k] ? `${rk[k][e.driverId] === 1 ? `<span class="fl-time">${esc(e[k])}</span>` : esc(e[k])} <small>P${rk[k][e.driverId] ?? '—'}</small>` : '—';
+    const grid = re ? (re.grid === 0 ? L('PIT LANE') : re.grid ? `P${re.grid}` : '—') : '—';
+    return big + kvHTML([['Q1', seg('q1')], ['Q2', seg('q2')], ['Q3', seg('q3')], [L('FINAL'), posLabel(e)], [L('RACE GRID'), grid]]);
+  }
+  if (kind === 'race') {
+    const gain = e.cls === 'FIN' && e.grid && e.pos ? e.grid - e.pos : null;
+    const gainTxt = gain == null ? '—' : gain > 0 ? `<span class="gain-up">+${gain}</span>` : gain < 0 ? `<span class="gain-down">${gain}</span>` : '0';
+    const items = [[L('GRID'), e.grid === 0 ? L('PIT LANE') : e.grid ? `P${e.grid}` : '—'], [L('FINISH'), `<span class="pos ${posClass(e)}">${posLabel(e)}</span>`], [L('GAIN'), gainTxt], [L('POINTS'), fmtPts(e.points)], [L('LAPS'), e.laps ?? '—'], [L('STATUS'), esc(statusText(e.status) || '—')], [L('FASTEST LAP'), e.fl ? `<span class="${e.flRank === 1 ? 'fl-time' : ''}">${esc(e.fl)}</span> <small>${e.flRank ? '#' + e.flRank : ''}</small>` : '—']];
+    if (s.key === 'R') items.push([L('PIT STOPS'), pits == null ? '—' : pits]);
+    if (e.cls === 'FIN' && e.time) items.push([L('TIME'), esc(e.time)]);
+    return big + kvHTML(items);
+  }
+  if (kind === 'of1race') return big + kvHTML([[L('LAPS'), e.laps ?? '—'], [L('TIME / GAP'), e.pos === 1 ? fmtSec(e.duration) : fmtGap(e.gap)], [L('POINTS'), e.points != null ? fmtPts(e.points) : '—']]);
+  return big;
+}
+async function driverRoundHTML(driverId, round, signal) {
+  const race = API.getRaceWeekend(round); if (!race) return `<p class="muted">${L('Round not found.')}</p>`;
+  const now = Date.now();
+  const cards = await Promise.all(race.sessions.map(async s => {
+    const st = sessionState(s, now); const wide = s.key === 'R';
+    if (st === 'cancelled') return sessCard(race, s, st, `<div class="muted">${L('Session cancelled.')}</div>`, { wide, pending: true });
+    if (st === 'upcoming' || st === 'next') return sessCard(race, s, st, `<div class="muted">${L('Not started yet.')}</div>`, { wide, pending: true });
+    if (st === 'live') return sessCard(race, s, st, `<div class="muted">${L('msg.inProgress')}</div>`, { wide, pending: true });
+    try {
+      const c = await getClassification(race, s, signal);
+      if (c.unavailable) return sessCard(race, s, st, `<div class="muted">${esc(c.unavailable)}</div>`, { wide });
+      const e = c.rows.find(x => x.driverId === driverId);
+      if (!e) return sessCard(race, s, st, `<div class="muted">${L('No classified result for this driver in this session.')}</div>`, { wide, src: c.source });
+      let pits = null;
+      if (s.key === 'R' && c.kind === 'race') {
+        try { const p = await API.getPitStops(S.season, round, sessionEnd(s), { signal }); pits = p.total ? (p.byDriver[driverId] || 0) : null; } catch (err) { if (isAbort(err)) throw err; }
+      }
+      return sessCard(race, s, st, sessionBody(c.kind, e, c, race, s, pits), { wide, src: c.source });
+    } catch (err) {
+      if (isAbort(err)) throw err;
+      return sessCard(race, s, st, `<div class="muted">${esc(errText(err))}</div>`, { wide });
+    }
+  }));
+  return `<div class="sess-grid">${cards.join('')}</div>`;
+}
+async function fillDriverRound(driverId, round, body, signal) {
+  try { const html = await driverRoundHTML(driverId, round, signal); if (body.isConnected) body.innerHTML = html; }
+  catch (e) { if (!isAbort(e) && body.isConnected) body.innerHTML = `<p class="muted">${esc(errText(e))}</p>`; }
+}
+
+// ---------- CONSTRUCTORS ----------
+function teamsHTML() {
+  const cs = S.d.cs;
+  if (!cs) return pageHead(L('CONSTRUCTOR CHAMPIONSHIP'), L('Constructors')) + sectionError('constructor standings');
+  if (!cs.rows.length) return pageHead(L('CONSTRUCTOR CHAMPIONSHIP'), L('Constructors')) + emptyCard(L('The championship has not started yet.'));
+  const der = derived();
+  const head = `<div class="thead g-c"><span>${L('POS')}</span><span></span><span>${L('TEAM')}</span><span class="t-team">${L('DRIVERS')}</span><span style="text-align:right">${L('POINTS')}</span><span style="text-align:right">${L('WINS')}</span><span style="text-align:right">${L('PODIUMS')}</span></div>`;
+  return pageHead(`${L('CONSTRUCTOR CHAMPIONSHIP')} · ${S.season}${cs.round ? ` · ${L('AFTER ROUND {0}', cs.round)}` : ''}`, L('Constructors')) + head + `<div class="list">${cs.rows.map(x => {
+    const drivers = teamDrivers(x.team.id).map(d => esc(d.driver.code)).join(' · ');
+    const pod = der.teamPodiums[x.team.id] || 0;
+    return `<a class="crow g-c" href="${href('constructors/' + enc(x.team.id))}" style="--tc:${teamColor(x.team.id)}">
+      <span class="c-pos rk ${rankCls(x.pos)}">${x.pos ? pad(x.pos) : esc(x.posText)}</span>${teamBadge(x.team)}
+      <span class="c-drv"><span class="dname"><b>${esc(x.team.name)}</b></span><span class="m-only drv-mini">${drivers}</span><span class="m-only drv-mini">${nWins(x.wins)} · ${nPods(pod)}</span></span>
+      <span class="c-team drv-mini">${drivers}</span>
+      <span class="c-pts"><b>${fmtPts(x.points)}</b><small>${L('PTS')}</small></span>
+      <span class="c-stat"><b>${x.wins}</b><small>${L('WINS')}</small></span>
+      <span class="c-stat"><b>${pod}</b><small>${L('PODIUMS')}</small></span>
+    </a>`; }).join('')}</div>`;
+}
+function teamDrivers(tid) {
+  const tr = API.getConstructorSeasonResults(tid); const acc = {};
+  for (const rd of Object.values(tr)) for (const [id, en] of Object.entries(rd.entries)) {
+    (acc[id] ||= { driver: en.driver, pts: 0, races: 0 });
+    acc[id].pts += (en.race?.points || 0) + (en.sprint?.points || 0);
+    if (en.race) acc[id].races++;
+  }
+  let list = Object.values(acc);
+  if (!list.length) list = (S.d.ds?.rows || []).filter(x => x.teams.some(t => t.id === tid)).map(x => ({ driver: x.driver, pts: null, races: 0 }));
+  return list.sort((a, b) => (b.pts ?? 0) - (a.pts ?? 0) || b.races - a.races);
+}
+function teamDetailHTML(r) {
+  const tid = r.a; const der = derived();
+  const row = S.d.cs?.rows.find(x => x.team.id === tid);
+  const team = row?.team || der.teams[tid];
+  if (!team) return backLink('constructors', L('CONSTRUCTORS')) + emptyCard(S.d.results ? L('No entries for this team in the {0} season.', S.season) : L('Team data is not available yet.'));
+  const stats = [[L('POSITION'), row?.pos ? `P${row.pos}` : '—'], [L('POINTS'), row ? fmtPts(row.points) : '—'], [L('WINS'), row ? row.wins : '—'], [L('PODIUMS'), der.teamPodiums[tid] || 0]];
+  const drivers = teamDrivers(tid);
+  const tr = API.getConstructorSeasonResults(tid);
+  const rows = S.d.schedule.races.filter(x => tr[x.round]).map(race => {
+    const rd = tr[race.round];
+    const ents = Object.entries(rd.entries).map(([id, en]) => {
+      const e = en.race, sp = en.sprint; const pts = (e?.points || 0) + (sp?.points || 0);
+      return `<a class="tr-ent" href="${href(`drivers/${enc(id)}/${race.round}`)}"><b>${esc(en.driver.code)}</b><span class="pos ${posClass(e)}">${e ? posLabel(e) : '—'}</span><span class="mono">${fmtPts(pts)} ${L('PTS')}</span>${sp ? `<small>${L('SPR')} ${posLabel(sp)}${sp.points ? ' +' + fmtPts(sp.points) : ''}</small>` : ''}</a>`;
+    }).join('');
+    return `<div class="trow"><span class="rr-round">R${pad(race.round)}</span>${flagHTML(race)}<span class="tr-gp"><b class="up">${esc(gpShort(race))}</b></span><span class="tr-ents">${ents}</span><span class="tr-tot"><b>${fmtPts(rd.total)}</b><small>${L('TEAM PTS')}</small></span></div>`;
+  }).join('');
+  return `${backLink('constructors', L('CONSTRUCTORS'))}
+    <section class="dhead card" style="--tc:${teamColor(tid)}">
+      ${teamBadge(team, 'l')}
+      <div class="dh-main">
+        <div class="kicker">${L('CONSTRUCTOR')} · ${S.season}</div>
+        <h1 class="dh-name">${esc(team.name)}</h1>
+        <div class="stats">${stats.map(([k, v]) => `<div class="stat"><span class="lbl">${k}</span><b>${v}</b></div>`).join('')}</div>
+      </div>
+    </section>
+    <div class="sechead"><h2 class="h2">${L('Drivers')}</h2><span class="dim" style="font-size:12.5px">${L('Points scored for this team (race + sprint)')}</span></div>
+    <div class="tdrivers">${drivers.map(d => `<a class="tdrv" href="${href('drivers/' + enc(d.driver.id))}">${photo(d.driver, 'm', tid)}<span><b>${esc(d.driver.family)}</b><span class="muted" style="font-size:13px">${esc(d.driver.given)} · ${esc(d.driver.code)}</span></span><span class="mono" style="margin-left:auto">${d.pts != null ? fmtPts(d.pts) + ' ' + L('PTS') : ''}</span></a>`).join('') || `<div class="muted">${L('No driver entries yet.')}</div>`}</div>
+    <div class="sechead"><h2 class="h2">${L('Race-by-race')}</h2><span class="dim" style="font-size:12.5px">${L('Team total = race + sprint points from the API')}</span></div>
+    <div>${rows || emptyCard(L('No race results yet this season.'))}</div>`;
+}
+
+// ---------- RESULTS ----------
+function resultsHTML(r) {
+  const races = S.d.schedule.races, now = Date.now();
+  const avail = races.filter(x => x.sessions.some(s => { const st = sessionState(s, now); return st === 'done' || st === 'live'; }) || (S.d.results?.[x.round] || []).length);
+  if (!avail.length) return pageHead(L('{0} RESULTS · SELECT ROUND', S.season), L('Results')) + emptyCard(L('No sessions have run yet this season.'));
+  const want = int(r.a);
+  const race = avail.find(x => x.round === want) || avail[avail.length - 1];
+  const doneKeys = race.sessions.filter(s => { const st = sessionState(s, now); return st === 'done' || st === 'live'; }).map(s => s.key);
+  let key = r.b && race.sessions.some(s => s.key === r.b) ? r.b : null;
+  if (!key) key = (S.d.results?.[race.round] || []).length ? 'R' : (doneKeys[doneKeys.length - 1] || race.sessions[0]?.key);
+  const s = race.sessions.find(x => x.key === key);
+  return pageHead(L('{0} RESULTS · SELECT ROUND', S.season), L('Results')) +
+    `<div class="rsel" id="rsel">${avail.map(x => `<a class="chip${x.round === race.round ? ' on' : ''}" href="${href('results/' + x.round)}">${flagHTML(x)}R${pad(x.round)}</a>`).join('')}</div>
+    <div class="res-head"><div class="kicker">${L('ROUND')} ${pad(race.round)} · ${dateRange(race)}</div><h2>${esc(gpName(race))}</h2><div class="muted" style="font-size:13.5px">${esc(race.circuitName)} · ${esc(placeName(race))}</div></div>
+    <div class="tabs" role="tablist">${race.sessions.map(x => { const st = sessionState(x, now); const dis = !(st === 'done' || st === 'live'); return `<a class="tab${x.key === key ? ' on' : ''}${dis ? ' dis' : ''}" role="tab" aria-selected="${x.key === key}" ${dis ? 'aria-disabled="true"' : `href="${href(`results/${race.round}/${x.key}`)}"`}>${esc(L(SESSION_META[x.key].tab))}</a>`; }).join('')}</div>
+    <div id="res-table" class="tblwrap">${s ? `<div style="padding-top:10px">${skel(8, 'sk-line')}</div>` : ''}</div>`;
+}
+function classificationTableHTML(race, s, c) {
+  const R = race.round;
+  const P = [L('POS'), 'n', e => `<span class="pos ${posClass(e)}">${posLabel(e)}</span>`];
+  const isFL = e => c.kind === 'race' && e.flRank === 1;
+  const D = [L('DRIVER'), '', e => `<span class="dcell">${photo(e.driver, 'xs', e.team?.id)}<span${isFL(e) ? ' class="fl"' : ''}><b>${esc(e.driver?.code || '')}</b> <span class="muted hs">${esc(e.driver?.given || '')} ${esc(e.driver?.family || '')}</span></span></span>`];
+  const purple = (html, on) => on ? `<span class="fl-time">${html}</span>` : html;
+  const qr = c.kind === 'quali' ? qualiRanks(c.rows) : null;
+  const qCell = k => e => e[k] ? purple(esc(e[k]), qr[k][e.driverId] === 1) : '—';
+  const mins = c.kind === 'practice' || c.kind === 'of1quali' ? segMins(c.rows) : [];
+  const T = [L('TEAM'), 'hs', e => teamTxt(e.team)];
+  const pre = s.key === 'SQ' ? 'SQ' : 'Q';
+  const COLS = {
+    race: [P, D, T, [L('GRID'), 'n r hs', e => e.grid === 0 ? L('PIT') : (e.grid ?? '—')], [L('LAPS'), 'n r', e => e.laps ?? '—'], [L('TIME / STATUS'), 'n', e => esc(raceTimeText(e)) + (e.flRank === 1 && e.fl ? ` <span class="fl-time" title="${esc(L('FASTEST LAP'))}">· FL ${esc(e.fl)}</span>` : '')], [L('PTS'), 'n r', e => e.points ? fmtPts(e.points) : '']],
+    quali: [P, D, T, ['Q1', 'n', qCell('q1')], ['Q2', 'n', qCell('q2')], ['Q3', 'n', qCell('q3')]],
+    practice: [P, D, T, [L('BEST LAP'), 'n', e => purple(fmtSec(e.duration), num(e.duration) != null && num(e.duration) === mins[0])], [L('GAP'), 'n', e => fmtGap(e.gap)], [L('LAPS'), 'n r', e => e.laps ?? '—']],
+    of1quali: [P, D, T, ...[0, 1, 2].map(i => [pre + (i + 1), 'n', e => { const v = Array.isArray(e.duration) ? e.duration[i] : (i === 0 ? e.duration : null); return purple(fmtSec(v), num(v) != null && num(v) === mins[i]); }])],
+    of1race: [P, D, T, [L('LAPS'), 'n r', e => e.laps ?? '—'], [L('TIME / GAP'), 'n', e => e.cls !== 'FIN' ? e.cls : e.pos === 1 ? fmtSec(e.duration) : fmtGap(e.gap)], [L('PTS'), 'n r', e => e.points ? fmtPts(e.points) : '']],
+  }[c.kind];
+  const go = e => e.driverId ? ` data-go="${href(`drivers/${enc(e.driverId)}/${R}`)}"` : '';
+  return `<table class="rt"><thead><tr>${COLS.map(([h, cl]) => `<th class="${cl}">${h}</th>`).join('')}</tr></thead>
+    <tbody>${c.rows.map(e => `<tr${go(e)}>${COLS.map(([, cl, f]) => `<td class="${cl}">${f(e)}</td>`).join('')}</tr>`).join('')}</tbody></table>
+    <div class="res-src"><span class="src">${L('SOURCE')} · ${esc(c.source)}</span><span class="src">${esc(sessTime(s))} · ${L('SELECT A DRIVER FOR THEIR WEEKEND')}</span></div>`;
+}
+async function fillResults(r, signal) {
+  const el = $('#res-table'); if (!el) return;
+  const races = S.d.schedule.races; const now = Date.now();
+  const avail = races.filter(x => x.sessions.some(s => { const st = sessionState(s, now); return st === 'done' || st === 'live'; }) || (S.d.results?.[x.round] || []).length);
+  const race = avail.find(x => x.round === int(r.a)) || avail[avail.length - 1]; if (!race) return;
+  const doneKeys = race.sessions.filter(s => { const st = sessionState(s, now); return st === 'done' || st === 'live'; }).map(s => s.key);
+  let key = r.b && race.sessions.some(s => s.key === r.b) ? r.b : null;
+  if (!key) key = (S.d.results?.[race.round] || []).length ? 'R' : (doneKeys[doneKeys.length - 1] || race.sessions[0]?.key);
+  const s = race.sessions.find(x => x.key === key); if (!s) return;
+  const st = sessionState(s, now);
+  if (st === 'live') { el.innerHTML = `<div class="note" style="margin-top:12px">${esc(L('msg.sessLive', sessionName(s)))}</div>`; return; }
+  $('#rsel .chip.on')?.scrollIntoView({ block: 'nearest', inline: 'center' });
+  try {
+    const c = await getClassification(race, s, signal);
+    if (!el.isConnected) return;
+    el.innerHTML = c.unavailable ? `<div class="note" style="margin-top:12px">${esc(c.unavailable)}</div>` : classificationTableHTML(race, s, c);
+  } catch (e) { if (!isAbort(e) && el.isConnected) el.innerHTML = `<div class="note" style="margin-top:12px">${esc(errText(e))} <button class="btn-sm" data-action="rerender">${L('Retry')}</button></div>`; }
+}
+
+/* =====================================================================
+   13. ROUTER + RENDER
+   ===================================================================== */
+function parseRoute() {
+  const h = (location.hash || '').replace(/^#\/?/, '');
+  const parts = h.split('/').filter(Boolean).map(p => { try { return decodeURIComponent(p); } catch (e) { return p; } });
+  let season = null;
+  if (parts[0] && /^\d{4}$/.test(parts[0])) season = int(parts.shift());
+  return { season, view: parts[0] || 'home', a: parts[1] || null, b: parts[2] || null };
+}
+const VIEWS = {
+  home: { html: homeHTML },
+  schedule: { html: scheduleHTML, after: (r, sig) => { for (const round of S.ui.openRaces) { const race = API.getRaceWeekend(round); const body = $(`#race-${round} .race-body`); if (race && body) fillRaceBody(race, body, sig); } } },
+  drivers: { html: r => r.a ? driverDetailHTML(r) : driversHTML(), after: (r, sig) => { if (!r.a) return; for (const k of S.ui.openDR) { const [id, rd] = k.split(':'); if (id !== r.a) continue; const body = $(`#dr-${rd} .rr-body`); if (body && !body.hidden) fillDriverRound(id, int(rd), body, sig); } } },
+  constructors: { html: r => r.a ? teamDetailHTML(r) : teamsHTML() },
+  results: { html: resultsHTML, after: (r, sig) => fillResults(r, sig) },
+};
+let VIEW_CTRL = null;
+const viewSignal = () => VIEW_CTRL ? VIEW_CTRL.signal : undefined;
+function render(opt = {}) {
+  const r = parseRoute();
+  const view = VIEWS[r.view] ? r.view : 'home';
+  if (VIEW_CTRL) VIEW_CTRL.abort();
+  VIEW_CTRL = new AbortController(); const sig = VIEW_CTRL.signal;
+  setNav(view);
+  const el = $('#view'); const y = window.scrollY;
+  if (!S.d.schedule) {
+    el.innerHTML = S.coreError
+      ? `<div class="card" style="padding:26px 22px"><div class="kicker red">${L('DATA UNAVAILABLE')}</div><h2 style="margin:8px 0 6px">${L('Unable to load latest data.')}</h2><p class="muted" style="margin:0 0 16px">${esc(L('msg.coreDown', S.coreError.message || 'error'))}</p><button class="btn-sm" data-action="refresh">${L('Retry')}</button></div>`
+      : `<div class="sk" style="height:34px;width:220px;margin-bottom:18px"></div>${skel(4)}`;
+    return;
+  }
+  computeNext();
+  // Route-driven expansion state
+  if (view === 'schedule' && r.a) S.ui.openRaces.add(int(r.a));
+  if (view === 'drivers' && r.a && r.b) S.ui.openDR.add(`${r.a}:${int(r.b)}`);
+  try { el.innerHTML = VIEWS[view].html(r); }
+  catch (e) { console.error(e); el.innerHTML = `<div class="note">${L('Something went wrong while rendering this view.')} <button class="btn-sm" data-action="rerender">${L('Retry')}</button></div>`; return; }
+  try { VIEWS[view].after && VIEWS[view].after(r, sig); } catch (e) { console.error(e); }
+  if (opt.keepScroll) window.scrollTo(0, y);
+  else {
+    const target = view === 'schedule' && r.a ? $(`#race-${int(r.a)}`) : view === 'drivers' && r.a && r.b ? $(`#dr-${int(r.b)}`) : null;
+    if (target) target.scrollIntoView({ block: 'start' }); else window.scrollTo(0, 0);
+  }
+  $('#brandSeason').textContent = L('F1 {0} SEASON', S.season);
+}
+function applyStatic() {
+  document.documentElement.lang = S.lang;
+  $$('[data-t]').forEach(el => { el.textContent = L(el.dataset.t); });
+  const f = $('#foot'); if (f) f.innerHTML = L('msg.footer');
+  const ls = $('#langSel'); if (ls) ls.value = S.lang;
+  if (S.season != null) $('#brandSeason').textContent = L('F1 {0} SEASON', S.season);
+}
+function setNav(view) {
+  $$('[data-nav]').forEach(a => { const v = a.dataset.nav; a.classList.toggle('on', v === view); a.setAttribute('href', href(v === 'home' ? '' : v)); if (v === view) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+}
+function toggleRace(round, btn) {
+  const art = btn.closest('.race'); const body = art.querySelector('.race-body'); const race = API.getRaceWeekend(round);
+  if (!race) return;
+  const open = !S.ui.openRaces.has(round);
+  if (open) {
+    S.ui.openRaces.add(round); body.innerHTML = raceBodyHTML(race); body.hidden = false;
+    art.classList.add('open'); btn.setAttribute('aria-expanded', 'true');
+    fillRaceBody(race, body, viewSignal());
+    history.replaceState(null, '', href('schedule/' + round));
+  } else {
+    S.ui.openRaces.delete(round); body.hidden = true; body.innerHTML = '';
+    art.classList.remove('open'); btn.setAttribute('aria-expanded', 'false');
+    if (int(parseRoute().a) === round) history.replaceState(null, '', href('schedule'));
+  }
+}
+function toggleDriverRound(id, round, btn) {
+  const wrap = btn.closest('.rr'); const body = wrap.querySelector('.rr-body'); const key = `${id}:${round}`;
+  const open = !S.ui.openDR.has(key);
+  if (open) {
+    S.ui.openDR.add(key); body.hidden = false; body.innerHTML = `<div class="sess-grid">${skel(3)}</div>`;
+    wrap.classList.add('open'); btn.setAttribute('aria-expanded', 'true');
+    fillDriverRound(id, round, body, viewSignal());
+    history.replaceState(null, '', href(`drivers/${enc(id)}/${round}`));
+  } else {
+    S.ui.openDR.delete(key); body.hidden = true; body.innerHTML = '';
+    wrap.classList.remove('open'); btn.setAttribute('aria-expanded', 'false');
+    if (int(parseRoute().b) === round) history.replaceState(null, '', href(`drivers/${enc(id)}`));
+  }
+}
+
+/* ---------- status bar ---------- */
+let STATUS_Q = false;
+function queueStatus() { if (STATUS_Q) return; STATUS_Q = true; requestAnimationFrame(() => { STATUS_Q = false; renderStatus(); }); }
+function renderStatus() {
+  const el = $('#status'); if (!el) return;
+  const j = HEALTH.jolpica, o = HEALTH.openf1; const now = Date.now();
+  const upd = S.updatedAt ? `${tHM(S.updatedAt)} ${tzAbbr(S.updatedAt)}${tDayKey(S.updatedAt) !== tDayKey(now) ? ' · ' + tMD(S.updatedAt) : ''}` : '—';
+  const paused = OF1.paused();
+  const of1 = S.season != null && S.season < CFG.MIN_SEASON ? ['N/A', 'dim'] : paused && OF1.reason === 'live' ? ['PAUSED · LIVE SESSION', 'warn'] : paused ? ['UNAVAILABLE', 'warn'] : o.ok === false ? ['UNAVAILABLE', 'warn'] : o.ok ? ['OK', ''] : S.d.meetings ? ['CACHED', 'dim'] : ['—', 'dim'];
+  const jol = j.ok === false ? ['ERROR', 'bad'] : j.ok ? ['OK', ''] : S.d.schedule ? ['CACHED', 'dim'] : ['—', 'dim'];
+  const lw = S.season === S.currentSeason ? liveWindowNow(now) : null;
+  const liveS = lw && sessionState(lw.session, now) === 'live' ? lw : null;
+  el.innerHTML = `<div class="sbar"><div class="sb-in">
+      <span class="sb-item"><span class="lbl">${L('LAST UPDATED')}</span><b>${esc(upd)}</b></span>
+      <span class="sb-item"><span class="lbl">JOLPICA</span><b class="${jol[1]}">${L(jol[0])}</b></span>
+      <span class="sb-item"><span class="lbl">OPENF1</span><b class="${of1[1]}">${L(of1[0])}</b></span>
+      ${S.refreshing ? `<span class="sb-item"><b class="dim">${L('UPDATING…')}</b></span>` : ''}
+      <button class="sb-btn" type="button" data-action="refresh" ${S.refreshing ? 'disabled' : ''}>${L('REFRESH')}</button>
+    </div></div>
+    ${j.ok === false ? `<div class="banner"><div class="banner-in"><b>${L('Unable to load latest data.')}</b><button class="btn-sm" type="button" data-action="refresh">${L('Retry')}</button><span class="muted">${esc(L('Last successful update: {0}', upd))}</span>${S.d.schedule ? `<span class="tag">${L('SHOWING CACHED DATA')}</span>` : ''}</div></div>` : ''}
+    ${liveS ? `<div class="banner"><div class="banner-in info"><span class="tag live">LIVE</span><span><b class="up">${esc(gpName(liveS.race))} · ${esc(sessionName(liveS.session))}</b> <span class="muted">${L('msg.liveBanner')}</span></span></div></div>` : ''}`;
+}
+
+/* ---------- selects ---------- */
+function buildSeasonSelect() {
+  const sel = $('#seasonSel');
+  const list = S.seasons.includes(S.season) ? S.seasons : [S.season, ...S.seasons];
+  sel.innerHTML = list.map(y => `<option value="${y}"${y === S.season ? ' selected' : ''}>${y}</option>`).join('');
+}
+function buildTzSelect() {
+  const sel = $('#tzSel'); const now = Date.now();
+  sel.innerHTML = TZ_OPTIONS.map(([id, label]) => {
+    const real = id === 'local' ? (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { return 'UTC'; } })() : id;
+    return `<option value="${id}"${id === S.tz ? ' selected' : ''}>${L(label)} · ${tzOffset(now, real)}</option>`;
+  }).join('');
+}
+
+/* =====================================================================
+   14. EVENTS + BOOT
+   ===================================================================== */
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-toggle],[data-action],tr[data-go]'); if (!t) return;
+  if (t.matches('tr[data-go]')) { if (!e.target.closest('a')) location.hash = t.dataset.go.slice(1); return; }
+  if (t.dataset.action === 'refresh') { refreshAll(true); return; }
+  if (t.dataset.action === 'rerender') { render({ keepScroll: true }); return; }
+  if (t.dataset.toggle === 'race') toggleRace(int(t.dataset.round), t);
+  else if (t.dataset.toggle === 'dr') toggleDriverRound(t.dataset.driver, int(t.dataset.round), t);
+});
+// Never show a broken-image icon: swap to the next source or a clean placeholder.
+document.addEventListener('error', ev => {
+  const img = ev.target; if (!(img instanceof HTMLImageElement)) return;
+  if (img.dataset.alt) { const a = img.dataset.alt; delete img.dataset.alt; img.src = a; return; }
+  const fb = img.dataset.fb; if (!fb) return;
+  const html = fb === 'sil' ? SIL : fb === 'track' ? TRACK_PH : fb === 'flag' ? `<span class="flag flag-t">${esc(img.dataset.txt || '')}</span>` : '';
+  img.insertAdjacentHTML('afterend', html); img.remove();
+}, true);
+$('#tzSel').addEventListener('change', e => {
+  S.tz = e.target.value; LS.set('pw:tz', S.tz); FMT.clear();
+  render({ keepScroll: true }); renderStatus();
+});
+$('#langSel').addEventListener('change', e => {
+  S.lang = e.target.value === 'en' ? 'en' : 'ko'; LS.set('pw:lang', S.lang); FMT.clear();
+  applyStatic(); buildTzSelect(); render({ keepScroll: true }); renderStatus();
+});
+$('#seasonSel').addEventListener('change', e => {
+  const y = int(e.target.value); const r = parseRoute();
+  const view = VIEWS[r.view] ? r.view : 'home';
+  location.hash = `#/${y !== S.currentSeason ? y + '/' : ''}${view === 'home' ? '' : view}`;
+});
+window.addEventListener('hashchange', () => {
+  if (S.currentSeason == null) { render(); return; }
+  const r = parseRoute(); const want = r.season || S.currentSeason;
+  if (want !== S.season) switchSeason(want); else render();
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && S.updatedAt && Date.now() - S.updatedAt > 10 * MIN) refreshAll(false);
+});
+
+// 1-second ticker: countdowns, relative times, and re-render when a session changes state.
+let LAST_SIG = '', LAST_CHECK = 0;
+function stateSig(now) { return (S.d.schedule?.races || []).map(r => r.sessions.map(s => sessionState(s, now)[0]).join('')).join('|'); }
+setInterval(() => {
+  const now = Date.now();
+  $$('[data-cd]').forEach(el => { el.innerHTML = cdInner(+el.dataset.cd); });
+  $$('[data-rel]').forEach(el => { el.textContent = relText(+el.dataset.rel); });
+  if (now - LAST_CHECK > 20e3 && S.d.schedule) {
+    LAST_CHECK = now; const sig = stateSig(now);
+    if (LAST_SIG && sig !== LAST_SIG) { const v = parseRoute().view; if (v === 'home' || v === 'schedule' || v === 'results') render({ keepScroll: true }); queueStatus(); }
+    LAST_SIG = sig;
+  }
+}, 1000);
+
+function boot() {
+  applyStatic(); buildTzSelect();
+  const cc = cacheRead('sched:current');
+  if (cc && cc.d && Array.isArray(cc.d.races)) {
+    // Instant first paint from the last session's cache, then revalidate.
+    S.scheduleCurrent = cc.d; S.currentSeason = cc.d.season;
+    S.seasons = []; for (let y = S.currentSeason; y >= CFG.MIN_SEASON; y--) S.seasons.push(y);
+    const want = parseRoute().season;
+    S.season = want && want >= 1950 && want <= S.currentSeason ? want : S.currentSeason;
+    S.loadTok++; hydrateFromCache(S.season); buildSeasonSelect();
+  }
+  render(); renderStatus();
+  refreshAll(false);
+}
+boot();
+// PWA: offline app shell (served over HTTPS, e.g. GitHub Pages). The Windows app uses 127.0.0.1 and skips this.
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+}
+})();
+</script>
+</body>
+</html>
